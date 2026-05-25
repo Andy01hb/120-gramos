@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
+import { StandProvider } from '../contexts/StandContext';
 
 function RootGuard() {
   const { user, loading } = useAuth();
@@ -32,7 +33,9 @@ function RootGuard() {
 export default function RootLayout() {
   return (
     <AuthProvider>
-      <RootGuard />
+      <StandProvider>
+        <RootGuard />
+      </StandProvider>
     </AuthProvider>
   );
 }
