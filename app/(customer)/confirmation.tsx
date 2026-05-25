@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
@@ -27,7 +27,13 @@ export default function ConfirmationScreen() {
     const unsub = onSnapshot(q, snap => {
       if (!snap.empty) setOrder({ id: snap.docs[0].id, ...snap.docs[0].data() } as Order);
     });
-    return unsub;
+    const timeout = setTimeout(() => {
+      // If no order after 15 seconds, something went wrong
+      Alert.alert('Error', 'No encontramos tu pedido. Intenta de nuevo.', [
+        { text: 'OK', onPress: () => router.replace('/(customer)') },
+      ]);
+    }, 15000);
+    return () => { clearTimeout(timeout); unsub(); };
   }, [paymentIntentId]);
 
   return (

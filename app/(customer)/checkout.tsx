@@ -13,6 +13,16 @@ export default function CheckoutScreen() {
   const router = useRouter();
   const [notes, setNotes] = useState('');
 
+  if (items.length === 0) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Text style={{ color: Colors.textSecondary, fontSize: 16 }}>Tu carrito está vacío.</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -21,7 +31,7 @@ export default function CheckoutScreen() {
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Tu pedido</Text>
           {items.map((item, i) => (
-            <View key={i} style={styles.itemRow}>
+            <View key={`${item.productId}-${item.flavors.join(',')}-${item.addBoba}`} style={styles.itemRow}>
               <Text style={styles.itemName}>{item.quantity}× {item.name}{item.addBoba ? ' + Boba' : ''}</Text>
               <Text style={styles.itemPrice}>${item.unitPrice * item.quantity}</Text>
             </View>

@@ -18,28 +18,33 @@ export default function PaymentScreen() {
   const [paymentIntentId, setPaymentIntentId] = useState('');
 
   useEffect(() => {
-    initSheet();
-  }, []);
+    async function initSheet() {
+      try {
+        const fns = getFunctions(app);
+        const createPI = httpsCallable(fns, 'createPaymentIntent');
+        const result = await createPI({ items, notes });
+        const { clientSecret, paymentIntentId: piId } = result.data as { clientSecret: string; paymentIntentId: string };
+        setPaymentIntentId(piId);
 
-  async function initSheet() {
-    try {
-      const functions = getFunctions(app);
-      const createPI = httpsCallable(functions, 'createPaymentIntent');
-      const result = await createPI({ items, notes });
-      const { clientSecret, paymentIntentId: piId } = result.data as { clientSecret: string; paymentIntentId: string };
-      setPaymentIntentId(piId);
-
-      const { error } = await initPaymentSheet({
-        paymentIntentClientSecret: clientSecret,
-        merchantDisplayName: '120 GRAMOS',
-        style: 'alwaysDark',
-        primaryButtonLabel: `Pagar $${subtotal} MXN`,
-      });
-      if (!error) setReady(true);
-    } catch (e: any) {
-      Alert.alert('Error', 'No pudimos preparar el pago. Intenta de nuevo.');
+        const { error: sheetError } = await initPaymentSheet({
+          paymentIntentClientSecret: clientSecret,
+          merchantDisplayName: '120 GRAMOS',
+          style: 'alwaysDark',
+          primaryButtonLabel: `Pagar $${subtotal} MXN`,
+        });
+        if (sheetError) {
+          Alert.alert('Error', sheetError.message, [{ text: 'OK', onPress: () => router.back() }]);
+          return;
+        }
+        setReady(true);
+      } catch {
+        Alert.alert('Error', 'No pudimos preparar el pago. Intenta de nuevo.', [
+          { text: 'OK', onPress: () => router.back() },
+        ]);
+      }
     }
-  }
+    initSheet();
+  }, []); // runs once on mount; items/subtotal/notes are stable at this point
 
   async function handlePay() {
     const { error } = await presentPaymentSheet();
@@ -48,6 +53,7 @@ export default function PaymentScreen() {
       return;
     }
     clear();
+    if (!paymentIntentId) return;
     router.replace({ pathname: '/(customer)/confirmation', params: { paymentIntentId } });
   }
 

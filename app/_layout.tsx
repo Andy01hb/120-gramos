@@ -33,8 +33,11 @@ function RootGuard() {
 }
 
 export default function RootLayout() {
+  const stripeKey = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+  if (!stripeKey) throw new Error('Missing env var: EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY');
+
   return (
-    <StripeProvider publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY!}>
+    <StripeProvider publishableKey={stripeKey}>
       <AuthProvider>
         <StandProvider>
           <CartProvider>
