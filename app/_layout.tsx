@@ -4,6 +4,15 @@ import { StripeProvider } from '@stripe/stripe-react-native';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
 import { StandProvider } from '../contexts/StandContext';
 import { CartProvider } from '../contexts/CartContext';
+import * as Notifications from 'expo-notifications';
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
 
 function RootGuard() {
   const { user, loading } = useAuth();
