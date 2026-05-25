@@ -24,7 +24,7 @@ export default function HomeScreen() {
           <Svg width={12} height={12} viewBox="0 0 24 24">
             <Path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill={Colors.primary} />
           </Svg>
-          <Text style={styles.locationText}>Plaza Los Enamorados</Text>
+          <Text style={styles.locationText}>Plaza de los Enamorados</Text>
         </View>
         <View style={[styles.statusBadge, { backgroundColor: isOpen ? '#1a2a1a' : '#2a1a1a' }]}>
           <View style={[styles.statusDot, { backgroundColor: isOpen ? Colors.success : Colors.error }]} />
@@ -43,13 +43,13 @@ export default function HomeScreen() {
 
         {featured.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Mas vendidos</Text>
+            <Text style={styles.sectionTitle}>Más vendidos</Text>
             <ProductCardRow items={featured} />
           </View>
         )}
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Explora el menu</Text>
+          <Text style={styles.sectionTitle}>Explora el menú</Text>
           <ProductCardRow items={items} />
         </View>
 
@@ -59,8 +59,8 @@ export default function HomeScreen() {
             <Path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill={Colors.primary} />
           </Svg>
           <View>
-            <Text style={styles.standTitle}>Sab y Dom · Desde 5:00 PM</Text>
-            <Text style={styles.standSub}>Plaza de los Enamorados · Rio Bravo, Tamps.</Text>
+            <Text style={styles.standTitle}>Sáb y Dom · Desde 5:00 PM</Text>
+            <Text style={styles.standSub}>Plaza de los Enamorados · Río Bravo, Tamps.</Text>
           </View>
         </View>
       </ScrollView>
