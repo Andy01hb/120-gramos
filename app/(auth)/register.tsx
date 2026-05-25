@@ -7,13 +7,20 @@ import { Button } from '../../components/ui/Button';
 import { Colors } from '../../constants/colors';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
+import Constants from 'expo-constants';
 
 async function getPushToken(): Promise<string | null> {
-  if (!Device.isDevice) return null;
-  const { status } = await Notifications.requestPermissionsAsync();
-  if (status !== 'granted') return null;
-  const token = await Notifications.getExpoPushTokenAsync({ projectId: undefined });
-  return token.data;
+  try {
+    if (!Device.isDevice) return null;
+    const { status } = await Notifications.requestPermissionsAsync();
+    if (status !== 'granted') return null;
+    const token = await Notifications.getExpoPushTokenAsync({
+      projectId: Constants.expoConfig?.extra?.eas?.projectId,
+    });
+    return token.data;
+  } catch {
+    return null;
+  }
 }
 
 export default function RegisterScreen() {
@@ -28,9 +35,14 @@ export default function RegisterScreen() {
       return;
     }
     setLoading(true);
+    let firebaseUser: import('firebase/auth').User | null = null;
     try {
-      const { user: firebaseUser } = await createUserWithEmailAndPassword(auth, email.trim(), password);
+      const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
+      firebaseUser = cred.user;
+
+      // Push token is non-fatal — getPushToken() swallows its own errors
       const pushToken = await getPushToken();
+
       await createUser(firebaseUser.uid, {
         name: name.trim(),
         email: email.trim(),
@@ -39,6 +51,10 @@ export default function RegisterScreen() {
       });
       // AuthContext detects login and redirects to /(customer)
     } catch (e: any) {
+      // If Firestore write failed after auth account was created, clean up the orphan
+      if (firebaseUser) {
+        try { await firebaseUser.delete(); } catch {}
+      }
       Alert.alert('Error', e.message ?? 'No se pudo crear la cuenta');
     } finally {
       setLoading(false);
