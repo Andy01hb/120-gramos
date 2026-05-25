@@ -34,7 +34,13 @@ interface Props {
 
 export function OrderCard({ order, onPress, onAction, actionLoading }: Props) {
   const actionLabel = ACTION_LABEL[order.status];
-  const elapsed = Math.round((Date.now() - (order.createdAt as any)?.toMillis?.()) / 60000);
+  const createdMs =
+    typeof (order.createdAt as any)?.toMillis === 'function'
+      ? (order.createdAt as any).toMillis()
+      : order.createdAt instanceof Date
+        ? (order.createdAt as Date).getTime()
+        : null;
+  const elapsed = createdMs !== null ? Math.round((Date.now() - createdMs) / 60000) : null;
 
   return (
     <TouchableOpacity style={[styles.card, { borderLeftColor: STATUS_COLOR[order.status] }]} onPress={onPress} activeOpacity={0.8}>
@@ -44,7 +50,7 @@ export function OrderCard({ order, onPress, onAction, actionLoading }: Props) {
           <View style={[styles.statusPill, { backgroundColor: STATUS_COLOR[order.status] + '22' }]}>
             <Text style={[styles.statusText, { color: STATUS_COLOR[order.status] }]}>{STATUS_LABEL[order.status]}</Text>
           </View>
-          <Text style={styles.elapsed}>hace {elapsed < 1 ? '<1' : elapsed} min</Text>
+          <Text style={styles.elapsed}>{elapsed !== null ? `hace ${elapsed < 1 ? '<1' : elapsed} min` : ''}</Text>
         </View>
       </View>
 

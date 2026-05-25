@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAdminOrders } from '../../../hooks/useAdminOrders';
@@ -28,6 +28,7 @@ export default function AdminOrdersScreen() {
   const { isOpen } = useStand();
   const router = useRouter();
   const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [toggling, setToggling] = useState(false);
 
   async function handleAction(order: Order) {
     const next = NEXT_STATUS[order.status];
@@ -37,13 +38,26 @@ export default function AdminOrdersScreen() {
     setLoadingId(null);
   }
 
+  async function handleStandToggle() {
+    if (toggling) return;
+    setToggling(true);
+    try {
+      await setStandOpen(!isOpen);
+    } catch {
+      Alert.alert('Error', 'No se pudo cambiar el estado del stand.');
+    } finally {
+      setToggling(false);
+    }
+  }
+
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
         <Text style={styles.title}>Pedidos</Text>
         <TouchableOpacity
           style={[styles.standToggle, isOpen ? styles.standOpen : styles.standClosed]}
-          onPress={() => setStandOpen(!isOpen)}
+          onPress={handleStandToggle}
+          disabled={toggling}
         >
           <View style={[styles.toggleDot, { backgroundColor: isOpen ? Colors.success : Colors.error }]} />
           <Text style={[styles.toggleText, { color: isOpen ? Colors.success : Colors.error }]}>

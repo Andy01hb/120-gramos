@@ -44,24 +44,36 @@ export default function AdminOrderDetailScreen() {
   }, [id]);
 
   async function handleAdvance() {
-    if (!order) return;
+    if (!order || loading) return;
     const next = NEXT_STATUS[order.status];
     if (!next) return;
     setLoading(true);
-    await updateOrderStatus(order.id, next);
-    setLoading(false);
-    if (next === 'completed') router.back();
+    try {
+      await updateOrderStatus(order.id, next);
+      if (next === 'completed') router.back();
+    } catch {
+      Alert.alert('Error', 'No se pudo actualizar el pedido. Inténtalo de nuevo.');
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function handleCancel() {
+    if (loading) return;
     Alert.alert('Cancelar pedido', '¿Seguro? Esta acción no se puede deshacer.', [
       { text: 'No', style: 'cancel' },
       {
         text: 'Cancelar pedido', style: 'destructive',
         onPress: async () => {
           if (!id) return;
-          await updateOrderStatus(id, 'cancelled');
-          router.back();
+          setLoading(true);
+          try {
+            await updateOrderStatus(id, 'cancelled');
+            router.back();
+          } catch {
+            Alert.alert('Error', 'No se pudo cancelar el pedido.');
+            setLoading(false);
+          }
         },
       },
     ]);
