@@ -1,10 +1,12 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { StripeProvider } from '@stripe/stripe-react-native';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
 import { StandProvider } from '../contexts/StandContext';
 import { CartProvider } from '../contexts/CartContext';
 import * as Notifications from 'expo-notifications';
+import NetInfo from '@react-native-community/netinfo';
+import { Toast } from '../components/ui/Toast';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -18,6 +20,14 @@ function RootGuard() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const segments = useSegments();
+  const [offline, setOffline] = useState(false);
+
+  useEffect(() => {
+    const unsub = NetInfo.addEventListener(state => {
+      setOffline(!(state.isConnected ?? true));
+    });
+    return unsub;
+  }, []);
 
   useEffect(() => {
     if (loading) return;
@@ -38,7 +48,12 @@ function RootGuard() {
     }
   }, [user, loading, segments[0]]);
 
-  return <Slot />;
+  return (
+    <>
+      <Slot />
+      <Toast message="Sin conexión a internet" visible={offline} type="error" />
+    </>
+  );
 }
 
 export default function RootLayout() {
