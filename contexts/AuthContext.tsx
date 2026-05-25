@@ -21,20 +21,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    return onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        const appUser = await getUser(firebaseUser.uid);
-        setUser(appUser);
-      } else {
-        setUser(null);
+    let cancelled = false;
+
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      try {
+        if (firebaseUser) {
+          const appUser = await getUser(firebaseUser.uid);
+          // appUser can be null if Firestore doc doesn't exist yet (mid-registration)
+          if (!cancelled) setUser(appUser);
+        } else {
+          if (!cancelled) setUser(null);
+        }
+      } catch {
+        // Network or Firestore error — treat as unauthenticated so the user
+        // is directed to login rather than stuck on a loading screen
+        if (!cancelled) setUser(null);
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-      setLoading(false);
     });
+
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
   }, []);
 
   const logout = async () => {
+    // Don't setUser(null) here — onAuthStateChanged will fire and handle it
     await signOut(auth);
-    setUser(null);
   };
 
   return (

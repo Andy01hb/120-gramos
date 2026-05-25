@@ -24,7 +24,7 @@ function RootGuard() {
     if (user.role === 'customer' && !inCustomer) {
       router.replace('/(customer)');
     }
-  }, [user, loading, segments]);
+  }, [user, loading, segments[0]]);
 
   return <Slot />;
 }
