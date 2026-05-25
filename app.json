@@ -1,15 +1,27 @@
 {
   "expo": {
-    "name": "120-gramos-app",
-    "slug": "120-gramos-app",
+    "name": "120 GRAMOS",
+    "slug": "120-gramos",
+    "scheme": "gramos",
     "version": "1.0.0",
     "orientation": "portrait",
+    "backgroundColor": "#0a0a0a",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "plugins": [
+      "expo-router",
+      "expo-notifications",
+      [
+        "@stripe/stripe-react-native",
+        { "merchantIdentifier": "" }
+      ]
+    ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.cienveinte.gramos"
     },
     "android": {
+      "package": "com.cienveinte.gramos",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
