@@ -1,3 +1,5 @@
+import type { Timestamp } from 'firebase/firestore';
+
 export type UserRole = 'customer' | 'admin';
 
 export interface AppUser {
@@ -6,7 +8,7 @@ export interface AppUser {
   email: string;
   role: UserRole;
   pushToken: string | null;
-  createdAt: Date;
+  createdAt: Timestamp | Date;
 }
 
 export interface OrderItem {
@@ -36,8 +38,8 @@ export interface Order {
   paymentIntentId: string;
   paymentStatus: 'pending' | 'paid' | 'failed';
   notes: string | null;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: Timestamp | Date;
+  updatedAt: Timestamp | Date;
 }
 
 export type MenuCategory = 'iced_coffee' | 'matcha' | 'otras';
