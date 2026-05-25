@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Slot, useRouter, useSegments } from 'expo-router';
+import { StripeProvider } from '@stripe/stripe-react-native';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
 import { StandProvider } from '../contexts/StandContext';
 import { CartProvider } from '../contexts/CartContext';
@@ -33,12 +34,14 @@ function RootGuard() {
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <StandProvider>
-        <CartProvider>
-          <RootGuard />
-        </CartProvider>
-      </StandProvider>
-    </AuthProvider>
+    <StripeProvider publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY!}>
+      <AuthProvider>
+        <StandProvider>
+          <CartProvider>
+            <RootGuard />
+          </CartProvider>
+        </StandProvider>
+      </AuthProvider>
+    </StripeProvider>
   );
 }
