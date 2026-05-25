@@ -16,14 +16,31 @@ const STEP_LABEL: Partial<Record<Order['status'], string>> = {
 };
 
 export default function OrderDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const params = useLocalSearchParams<{ id: string }>();
+  const id = Array.isArray(params.id) ? params.id[0] : params.id;
   const [order, setOrder] = useState<Order | null>(null);
+  const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
+    if (!id) return;
     return onSnapshot(doc(db, 'orders', id), snap => {
-      if (snap.exists()) setOrder({ id: snap.id, ...snap.data() } as Order);
+      if (snap.exists()) {
+        setOrder({ id: snap.id, ...snap.data() } as Order);
+      } else {
+        setNotFound(true);
+      }
     });
   }, [id]);
+
+  if (notFound) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Text style={{ color: Colors.textSecondary, fontSize: 16 }}>Pedido no encontrado.</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   if (!order) return null;
   const currentStep = STEPS.indexOf(order.status);
@@ -34,20 +51,26 @@ export default function OrderDetailScreen() {
         <Text style={styles.title}>Pedido #{order.id.slice(-4).toUpperCase()}</Text>
 
         {/* Progress stepper */}
-        <View style={styles.stepper}>
-          {STEPS.map((step, i) => (
-            <View key={step} style={styles.stepRow}>
-              <View style={[styles.stepDot, i <= currentStep && styles.stepDotActive]} />
-              <Text style={[styles.stepLabel, i <= currentStep && styles.stepLabelActive]}>{STEP_LABEL[step]}</Text>
-            </View>
-          ))}
-        </View>
+        {order.status === 'cancelled' ? (
+          <View style={[styles.stepper, { borderLeftWidth: 3, borderLeftColor: Colors.error }]}>
+            <Text style={{ color: Colors.error, fontWeight: '700' }}>Pedido cancelado</Text>
+          </View>
+        ) : (
+          <View style={styles.stepper}>
+            {STEPS.map((step, i) => (
+              <View key={step} style={styles.stepRow}>
+                <View style={[styles.stepDot, i <= currentStep && styles.stepDotActive]} />
+                <Text style={[styles.stepLabel, i <= currentStep && styles.stepLabelActive]}>{STEP_LABEL[step]}</Text>
+              </View>
+            ))}
+          </View>
+        )}
 
         {/* Items */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Tu pedido</Text>
-          {order.items.map((item, i) => (
-            <View key={i} style={styles.itemRow}>
+          {order.items.map((item) => (
+            <View key={item.productId} style={styles.itemRow}>
               <Text style={styles.itemName}>{item.quantity}× {item.name}{item.addBoba ? ' + Boba' : ''}</Text>
               <Text style={styles.itemPrice}>${item.unitPrice * item.quantity}</Text>
             </View>

@@ -10,7 +10,12 @@ export function useOrders() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
+    setOrders([]);
+    setLoading(true);
+    if (!user) {
+      setLoading(false);
+      return;
+    }
     const q = query(
       collection(db, 'orders'),
       where('userId', '==', user.uid),
