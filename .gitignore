@@ -30,8 +30,11 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
+# local env files — ninguno de estos debe subirse a git
 .env
+.env.local
+.env.staging
+.env.production
 .env*.local
 
 # typescript
