@@ -36,7 +36,14 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "dev": "EXPO_ENV=local expo start --env-file .env.local",
+    "emulator": "firebase emulators:start --import=./emulator-data --export-on-exit=./emulator-data",
+    "emulator:clean": "firebase emulators:start",
+    "build:web": "npx expo export --platform web",
+    "deploy:web": "npm run build:web && vercel dist/ --yes --prod",
+    "build:preview": "eas build -p android --profile preview",
+    "build:prod": "eas build -p android --profile production"
   },
   "private": true
 }
