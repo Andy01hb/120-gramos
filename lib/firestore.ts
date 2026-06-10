@@ -11,6 +11,10 @@ export async function createUser(uid: string, data: Omit<AppUser, 'uid' | 'creat
   await setDoc(doc(db, 'users', uid), { ...data, createdAt: serverTimestamp() });
 }
 
+export async function updateUser(uid: string, data: { name: string }): Promise<void> {
+  await updateDoc(doc(db, 'users', uid), data);
+}
+
 export async function updateOrderStatus(orderId: string, status: Order['status']): Promise<void> {
   await updateDoc(doc(db, 'orders', orderId), { status, updatedAt: serverTimestamp() });
 }

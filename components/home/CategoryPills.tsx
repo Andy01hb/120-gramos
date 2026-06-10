@@ -1,20 +1,21 @@
 import { ScrollView, TouchableOpacity, Text, StyleSheet } from 'react-native';
-import { Colors } from '../../constants/colors';
-import type { MenuCategory } from '../../types';
+import { CColors } from '../../constants/colors';
+import { useCategories } from '../../hooks/useCategories';
 
-const CATEGORIES: { label: string; value: MenuCategory | 'all' }[] = [
-  { label: 'Todo', value: 'all' },
-  { label: 'Iced Coffee', value: 'iced_coffee' },
-  { label: 'Matcha', value: 'matcha' },
-  { label: 'Otras', value: 'otras' },
-];
-
-interface Props { active: MenuCategory | 'all'; onChange: (c: MenuCategory | 'all') => void }
+interface Props { active: string; onChange: (c: string) => void }
 
 export function CategoryPills({ active, onChange }: Props) {
+  const categories = useCategories();
+  const pills = [{ label: 'Todo', value: 'all' }, ...categories.map(c => ({ label: c, value: c }))];
+
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
-      {CATEGORIES.map(c => (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={styles.scroll}
+      contentContainerStyle={styles.row}
+    >
+      {pills.map(c => (
         <TouchableOpacity
           key={c.value}
           style={[styles.pill, active === c.value && styles.pillActive]}
@@ -28,9 +29,14 @@ export function CategoryPills({ active, onChange }: Props) {
 }
 
 const styles = StyleSheet.create({
-  row: { paddingHorizontal: 16, gap: 8, paddingVertical: 4 },
-  pill: { paddingHorizontal: 16, paddingVertical: 7, borderRadius: 20, borderWidth: 1.5, borderColor: Colors.border },
-  pillActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
-  label: { fontSize: 12, fontWeight: '700', color: Colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 },
-  labelActive: { color: '#000' },
+  scroll: { flexGrow: 0, flexShrink: 0, backgroundColor: CColors.background },
+  row: { paddingHorizontal: 16, gap: 8, paddingVertical: 12, alignItems: 'center' },
+  pill: {
+    paddingHorizontal: 18, paddingVertical: 8, borderRadius: 100,
+    borderWidth: 1.5, borderColor: CColors.border,
+    backgroundColor: CColors.surface,
+  },
+  pillActive: { backgroundColor: CColors.primary, borderColor: CColors.primary },
+  label: { fontSize: 12, fontWeight: '800', color: CColors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.8 },
+  labelActive: { color: '#fff' },
 });

@@ -1,6 +1,8 @@
 import { initializeApp, getApps } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { initializeAuth, getAuth, getReactNativePersistence } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
+import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
 
 function required(key: string, val: string | undefined): string {
   if (!val) throw new Error(`Missing env var: ${key}`);
@@ -16,7 +18,11 @@ const firebaseConfig = {
   appId: required('EXPO_PUBLIC_FIREBASE_APP_ID', process.env.EXPO_PUBLIC_FIREBASE_APP_ID),
 };
 
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+const isNewApp = getApps().length === 0;
+const app = isNewApp ? initializeApp(firebaseConfig) : getApps()[0];
 export { app };
-export const auth = getAuth(app);
+export const auth = isNewApp
+  ? initializeAuth(app, { persistence: getReactNativePersistence(ReactNativeAsyncStorage) })
+  : getAuth(app);
 export const db = getFirestore(app);
+export const storage = getStorage(app);

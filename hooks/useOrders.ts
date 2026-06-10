@@ -10,6 +10,7 @@ export function useOrders() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let active = true;
     setOrders([]);
     setLoading(true);
     if (!user) {
@@ -21,10 +22,12 @@ export function useOrders() {
       where('userId', '==', user.uid),
       orderBy('createdAt', 'desc')
     );
-    return onSnapshot(q, snap => {
+    const unsub = onSnapshot(q, snap => {
+      if (!active) return;
       setOrders(snap.docs.map(d => ({ id: d.id, ...d.data() } as Order)));
       setLoading(false);
     });
+    return () => { active = false; unsub(); };
   }, [user]);
 
   return { orders, loading };

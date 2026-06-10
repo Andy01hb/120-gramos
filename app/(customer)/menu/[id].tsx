@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
-import { View, Text, Image, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, Image, ScrollView, TouchableOpacity, StyleSheet, Alert, Platform, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
 import { useCart } from '../../../contexts/CartContext';
 import { useStand } from '../../../contexts/StandContext';
 import { Button } from '../../../components/ui/Button';
-import { Colors } from '../../../constants/colors';
-import type { MenuItem } from '../../../types';
+import { CColors } from '../../../constants/colors';
+import type { MenuItem, ProductOption, OptionSelection } from '../../../types';
 
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -17,116 +17,184 @@ export default function ProductDetailScreen() {
   const { isOpen } = useStand();
   const [item, setItem] = useState<MenuItem | null>(null);
   const [quantity, setQuantity] = useState(1);
-  const [selectedFlavor, setSelectedFlavor] = useState<string | null>(null);
-  const [addBoba, setAddBoba] = useState(false);
+  const [selections, setSelections] = useState<Record<string, OptionSelection>>({});
+
+  const { width } = useWindowDimensions();
+  const isWeb = Platform.OS === 'web';
+  const wideLayout = isWeb && width > 760;
 
   useEffect(() => {
-    getDoc(doc(db, 'menu', id)).then(snap => {
-      if (snap.exists()) setItem({ id: snap.id, ...snap.data() } as MenuItem);
+    if (!id) return;
+    return onSnapshot(doc(db, 'menu', id), snap => {
+      if (snap.exists()) setItem({ id: snap.id, options: [], ...snap.data() } as MenuItem);
     });
   }, [id]);
 
   if (!item) return null;
 
-  const total = (item.price + (addBoba ? 15 : 0)) * quantity;
+  function selectOption(opt: ProductOption, answer: string) {
+    const extraPrice = opt.type === 'boolean' && answer === 'Sí' ? opt.extraPrice :
+                       opt.type === 'single' ? opt.extraPrice : 0;
+    setSelections(prev => ({
+      ...prev,
+      [opt.id]: { optionId: opt.id, question: opt.question, answer, extraPrice },
+    }));
+  }
+
+  function getMissingRequired(): string | null {
+    for (const opt of item!.options) {
+      if (opt.required && !selections[opt.id]) return opt.question;
+    }
+    return null;
+  }
+
+  const selectionsTotal = Object.values(selections).reduce((s, sel) => s + sel.extraPrice, 0);
+  const total = (item.price + selectionsTotal) * quantity;
 
   function handleAdd() {
     if (!isOpen) { Alert.alert('Stand cerrado', 'Volvemos el próximo fin de semana.'); return; }
+    const missing = getMissingRequired();
+    if (missing) { Alert.alert('Falta una opción', `Por favor selecciona: ${missing}`); return; }
+
     addItem({
       productId: item!.id,
       name: item!.name,
       quantity,
-      flavors: selectedFlavor ? [selectedFlavor] : [],
-      addBoba,
-      unitPrice: item!.price + (addBoba ? 15 : 0),
+      unitPrice: item!.price + selectionsTotal,
+      selections: Object.values(selections),
     });
-    router.push('/(customer)/cart');
+    router.navigate('/(customer)/orders' as any);
+  }
+
+  const detailContent = (
+    <View style={[styles.body, wideLayout && styles.bodyWide]}>
+      <Text style={styles.name}>{item.name}</Text>
+      {item.description ? <Text style={styles.description}>{item.description}</Text> : null}
+      <Text style={styles.price}>${item.price} MXN</Text>
+
+      {item.options.length > 0 && (
+        <View style={styles.optionsBlock}>
+          {item.options.map(opt => (
+            <View key={opt.id} style={styles.section}>
+              <View style={styles.sectionRow}>
+                <Text style={styles.sectionLabel}>
+                  {opt.question}{opt.required ? <Text style={styles.required}> *</Text> : null}
+                </Text>
+                {opt.extraPrice > 0 && <Text style={styles.extraPrice}>+${opt.extraPrice}</Text>}
+              </View>
+              <View style={styles.options}>
+                {(opt.type === 'single' ? opt.choices : ['Sí', 'No']).map(choice => {
+                  const isSelected = selections[opt.id]?.answer === choice;
+                  return (
+                    <TouchableOpacity
+                      key={choice}
+                      style={[styles.option, isSelected && styles.optionActive]}
+                      onPress={() => selectOption(opt, choice)}
+                    >
+                      <Text style={[styles.optionText, isSelected && styles.optionTextActive]}>
+                        {isSelected ? '✓ ' : ''}{choice}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          ))}
+        </View>
+      )}
+
+      <View style={styles.qtyRow}>
+        <TouchableOpacity style={styles.qtyBtn} onPress={() => setQuantity(q => Math.max(1, q - 1))}>
+          <Text style={styles.qtyBtnText}>−</Text>
+        </TouchableOpacity>
+        <Text style={styles.qty}>{quantity}</Text>
+        <TouchableOpacity style={styles.qtyBtn} onPress={() => setQuantity(q => Math.min(10, q + 1))}>
+          <Text style={styles.qtyBtnText}>+</Text>
+        </TouchableOpacity>
+      </View>
+
+      <Button
+        label={`Agregar al carrito · $${total}`}
+        onPress={handleAdd}
+        disabled={!isOpen}
+      />
+      {!isOpen && <Text style={styles.closedNote}>El stand está cerrado. Volvemos el próximo fin de semana.</Text>}
+    </View>
+  );
+
+  if (wideLayout) {
+    return (
+      <SafeAreaView style={styles.safe} edges={[]}>
+        <ScrollView contentContainerStyle={styles.wideContainer}>
+          <View style={styles.wideInner}>
+            <View style={styles.wideImageCol}>
+              {item.imageUrl
+                ? <Image source={{ uri: item.imageUrl }} style={styles.imgWide} resizeMode="contain" />
+                : <View style={[styles.imgWide, { backgroundColor: CColors.surfaceMuted }]} />
+              }
+            </View>
+            <View style={styles.wideDetailCol}>{detailContent}</View>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    );
   }
 
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView>
         {item.imageUrl
-          ? <Image source={{ uri: item.imageUrl }} style={styles.img} resizeMode="cover" />
-          : <View style={[styles.img, { backgroundColor: Colors.surface }]} />
+          ? <Image source={{ uri: item.imageUrl }} style={styles.img} resizeMode="contain" />
+          : <View style={[styles.img, { backgroundColor: CColors.surfaceMuted }]} />
         }
-        <View style={styles.body}>
-          <Text style={styles.name}>{item.name}</Text>
-          <Text style={styles.price}>${item.price} MXN</Text>
-
-          {/* Flavors */}
-          {item.flavors.length > 0 && (
-            <View style={styles.section}>
-              <Text style={styles.sectionLabel}>Sabor (jarabe Torani)</Text>
-              <View style={styles.options}>
-                {item.flavors.map(f => (
-                  <TouchableOpacity
-                    key={f}
-                    style={[styles.option, selectedFlavor === f && styles.optionActive]}
-                    onPress={() => setSelectedFlavor(f === selectedFlavor ? null : f)}
-                  >
-                    <Text style={[styles.optionText, selectedFlavor === f && styles.optionTextActive]}>{f}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-          )}
-
-          {/* Boba toggle */}
-          {item.hasBoba && (
-            <TouchableOpacity
-              style={[styles.bobaToggle, addBoba && styles.bobaActive]}
-              onPress={() => setAddBoba(b => !b)}
-            >
-              <Text style={[styles.bobaText, addBoba && styles.bobaTextActive]}>
-                {addBoba ? '✓ ' : ''}Agregar Boba +$15
-              </Text>
-            </TouchableOpacity>
-          )}
-
-          {/* Quantity stepper */}
-          <View style={styles.qtyRow}>
-            <TouchableOpacity style={styles.qtyBtn} onPress={() => setQuantity(q => Math.max(1, q - 1))}>
-              <Text style={styles.qtyBtnText}>−</Text>
-            </TouchableOpacity>
-            <Text style={styles.qty}>{quantity}</Text>
-            <TouchableOpacity style={styles.qtyBtn} onPress={() => setQuantity(q => q + 1)}>
-              <Text style={styles.qtyBtnText}>+</Text>
-            </TouchableOpacity>
-          </View>
-
-          <Button
-            label={`Agregar al carrito · $${total}`}
-            onPress={handleAdd}
-            disabled={!isOpen}
-          />
-          {!isOpen && <Text style={styles.closedNote}>El stand está cerrado. Volvemos el próximo fin de semana.</Text>}
-        </View>
+        {detailContent}
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.background },
-  img: { width: '100%', height: 260 },
-  body: { padding: 20, gap: 16 },
-  name: { fontSize: 26, fontWeight: '900', color: Colors.text },
-  price: { fontSize: 20, fontWeight: '700', color: Colors.primary },
-  section: { gap: 8 },
-  sectionLabel: { fontSize: 13, fontWeight: '700', color: Colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 },
+  safe: { flex: 1, backgroundColor: CColors.background },
+  img: { width: '100%', height: 280, backgroundColor: CColors.surface },
+  body: { padding: 20, gap: 16, backgroundColor: CColors.background },
+  bodyWide: { padding: 32, paddingTop: 20 },
+  wideContainer: { flexGrow: 1, padding: 40, backgroundColor: CColors.background },
+  wideInner: { flexDirection: 'row', gap: 40, maxWidth: 960, alignSelf: 'center', width: '100%' },
+  wideImageCol: { flex: 1, borderRadius: 20, overflow: 'hidden', backgroundColor: CColors.surface },
+  imgWide: { width: '100%', aspectRatio: 0.9, borderRadius: 20 },
+  wideDetailCol: { flex: 1 },
+
+  name: { fontSize: 28, fontWeight: '900', color: CColors.text },
+  description: { fontSize: 14, color: CColors.textSecondary, lineHeight: 21, marginTop: -4 },
+  price: { fontSize: 22, fontWeight: '700', color: CColors.primary },
+
+  optionsBlock: {
+    gap: 20,
+    backgroundColor: CColors.surface,
+    borderRadius: 16, padding: 16,
+    borderWidth: 1, borderColor: CColors.border,
+  },
+  section: { gap: 10 },
+  sectionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  sectionLabel: { fontSize: 14, fontWeight: '800', color: CColors.text, flex: 1 },
+  required: { color: CColors.error, fontWeight: '900' },
+  extraPrice: { fontSize: 13, fontWeight: '700', color: CColors.primary },
   options: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  option: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, borderWidth: 1.5, borderColor: Colors.border },
-  optionActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
-  optionText: { fontSize: 13, color: Colors.textSecondary, fontWeight: '600' },
-  optionTextActive: { color: '#000', fontWeight: '700' },
-  bobaToggle: { padding: 14, borderRadius: 12, borderWidth: 1.5, borderColor: Colors.border, alignItems: 'center' },
-  bobaActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
-  bobaText: { fontSize: 14, fontWeight: '700', color: Colors.textSecondary },
-  bobaTextActive: { color: '#000' },
+  option: {
+    paddingHorizontal: 16, paddingVertical: 9, borderRadius: 22,
+    borderWidth: 1.5, borderColor: CColors.border, backgroundColor: CColors.surfaceAlt,
+  },
+  optionActive: { backgroundColor: CColors.primary, borderColor: CColors.primary },
+  optionText: { fontSize: 13, color: CColors.textSecondary, fontWeight: '600' },
+  optionTextActive: { color: '#000', fontWeight: '800' },
+
   qtyRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 24 },
-  qtyBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
-  qtyBtnText: { fontSize: 24, color: Colors.text, fontWeight: '300' },
-  qty: { fontSize: 22, fontWeight: '900', color: Colors.text, minWidth: 32, textAlign: 'center' },
-  closedNote: { fontSize: 12, color: Colors.error, textAlign: 'center' },
+  qtyBtn: {
+    width: 44, height: 44, borderRadius: 22,
+    backgroundColor: CColors.surface, alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: CColors.border,
+  },
+  qtyBtnText: { fontSize: 24, color: CColors.text, fontWeight: '300' },
+  qty: { fontSize: 22, fontWeight: '900', color: CColors.text, minWidth: 32, textAlign: 'center' },
+  closedNote: { fontSize: 12, color: CColors.error, textAlign: 'center' },
 });

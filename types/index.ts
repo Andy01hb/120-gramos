@@ -11,13 +11,60 @@ export interface AppUser {
   createdAt: Timestamp | Date;
 }
 
+// ── Product options ──────────────────────────────────────────────────────────
+export type OptionType = 'single' | 'boolean';
+
+export interface ProductOption {
+  id: string;
+  question: string;
+  type: OptionType;
+  choices: string[];     // for 'single' type
+  extraPrice: number;    // added when boolean="Sí" or for the single group
+  required: boolean;
+}
+
+// ── Home sections ─────────────────────────────────────────────────────────────
+export interface HomeSection {
+  id: string;
+  title: string;
+  icon?: string;       // emoji shown before the title, e.g. '⭐', '🔥'
+  color?: string;      // hex background color, e.g. '#C8960A'
+  imageUrl: string | null;
+  productIds: string[];
+  order: number;
+}
+
+// ── Menu ─────────────────────────────────────────────────────────────────────
+export type MenuCategory = string;
+
+export interface MenuItem {
+  id: string;
+  name: string;
+  description?: string;
+  category: MenuCategory;
+  price: number;
+  available: boolean;
+  isFeatured: boolean;
+  isFavorite: boolean;
+  sortOrder: number;
+  imageUrl: string | null;
+  options: ProductOption[];
+}
+
+// ── Orders ───────────────────────────────────────────────────────────────────
+export interface OptionSelection {
+  optionId: string;
+  question: string;
+  answer: string;
+  extraPrice: number;
+}
+
 export interface OrderItem {
   productId: string;
   name: string;
   quantity: number;
-  flavors: string[];
-  addBoba: boolean;
   unitPrice: number;
+  selections: OptionSelection[];
 }
 
 export type OrderStatus =
@@ -40,19 +87,4 @@ export interface Order {
   notes: string | null;
   createdAt: Timestamp | Date;
   updatedAt: Timestamp | Date;
-}
-
-export type MenuCategory = 'iced_coffee' | 'matcha' | 'otras';
-
-export interface MenuItem {
-  id: string;
-  name: string;
-  category: MenuCategory;
-  price: number;
-  available: boolean;
-  flavors: string[];
-  hasBoba: boolean;
-  isFeatured: boolean;
-  sortOrder: number;
-  imageUrl: string | null;
 }

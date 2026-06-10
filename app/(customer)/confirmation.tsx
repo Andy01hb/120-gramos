@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { Button } from '../../components/ui/Button';
 import { Colors } from '../../constants/colors';
@@ -18,22 +18,39 @@ const STATUS_LABELS: Record<Order['status'], string> = {
 };
 
 export default function ConfirmationScreen() {
-  const { paymentIntentId } = useLocalSearchParams<{ paymentIntentId: string }>();
+  const params = useLocalSearchParams<{ paymentIntentId: string | string[] }>();
+  const rawId = params.paymentIntentId;
+  const paymentIntentId = Array.isArray(rawId) ? rawId[0] : rawId;
   const router = useRouter();
   const [order, setOrder] = useState<Order | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    const q = query(collection(db, 'orders'), where('paymentIntentId', '==', paymentIntentId));
-    const unsub = onSnapshot(q, snap => {
-      if (!snap.empty) setOrder({ id: snap.docs[0].id, ...snap.docs[0].data() } as Order);
+    if (!paymentIntentId) return;
+
+    timeoutRef.current = setTimeout(() => {
+      // Only fires if order was never found
+      Alert.alert(
+        'Tomando más tiempo de lo esperado',
+        'Tu pedido fue recibido pero tardamos en confirmarlo. Revisa tus pedidos en unos momentos.',
+        [{ text: 'Ver mis pedidos', onPress: () => router.replace('/(customer)/orders') }],
+      );
+    }, 12000);
+
+    const unsub = onSnapshot(doc(db, 'orders', paymentIntentId), snap => {
+      if (snap.exists()) {
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+          timeoutRef.current = null;
+        }
+        setOrder({ id: snap.id, ...snap.data() } as Order);
+      }
     });
-    const timeout = setTimeout(() => {
-      // If no order after 15 seconds, something went wrong
-      Alert.alert('Error', 'No encontramos tu pedido. Intenta de nuevo.', [
-        { text: 'OK', onPress: () => router.replace('/(customer)') },
-      ]);
-    }, 15000);
-    return () => { clearTimeout(timeout); unsub(); };
+
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      unsub();
+    };
   }, [paymentIntentId]);
 
   return (

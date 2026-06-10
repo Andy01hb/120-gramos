@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
-import { Colors } from '../../../constants/colors';
+import { CColors } from '../../../constants/colors';
 import type { Order } from '../../../types';
 
 const STEPS: Order['status'][] = ['paid', 'preparing', 'ready', 'completed'];
@@ -36,7 +36,7 @@ export default function OrderDetailScreen() {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <Text style={{ color: Colors.textSecondary, fontSize: 16 }}>Pedido no encontrado.</Text>
+          <Text style={{ color: CColors.textSecondary, fontSize: 16 }}>Pedido no encontrado.</Text>
         </View>
       </SafeAreaView>
     );
@@ -50,28 +50,33 @@ export default function OrderDetailScreen() {
       <ScrollView contentContainerStyle={styles.scroll}>
         <Text style={styles.title}>Pedido #{order.id.slice(-4).toUpperCase()}</Text>
 
-        {/* Progress stepper */}
         {order.status === 'cancelled' ? (
-          <View style={[styles.stepper, { borderLeftWidth: 3, borderLeftColor: Colors.error }]}>
-            <Text style={{ color: Colors.error, fontWeight: '700' }}>Pedido cancelado</Text>
+          <View style={[styles.stepper, styles.cancelledCard]}>
+            <Text style={{ color: CColors.error, fontWeight: '800', fontSize: 15 }}>Pedido cancelado</Text>
           </View>
         ) : (
           <View style={styles.stepper}>
-            {STEPS.map((step, i) => (
-              <View key={step} style={styles.stepRow}>
-                <View style={[styles.stepDot, i <= currentStep && styles.stepDotActive]} />
-                <Text style={[styles.stepLabel, i <= currentStep && styles.stepLabelActive]}>{STEP_LABEL[step]}</Text>
-              </View>
-            ))}
+            {STEPS.map((step, i) => {
+              const isActive = i <= currentStep;
+              const isCurrent = i === currentStep;
+              return (
+                <View key={step} style={styles.stepRow}>
+                  <View style={[styles.stepDot, isActive && styles.stepDotActive, isCurrent && styles.stepDotCurrent]} />
+                  <Text style={[styles.stepLabel, isActive && styles.stepLabelActive]}>
+                    {STEP_LABEL[step]}
+                    {isCurrent && <Text style={styles.stepCurrent}> ← ahora</Text>}
+                  </Text>
+                </View>
+              );
+            })}
           </View>
         )}
 
-        {/* Items */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Tu pedido</Text>
           {order.items.map((item) => (
             <View key={item.productId} style={styles.itemRow}>
-              <Text style={styles.itemName}>{item.quantity}× {item.name}{item.addBoba ? ' + Boba' : ''}</Text>
+              <Text style={styles.itemName}>{item.quantity}× {item.name}</Text>
               <Text style={styles.itemPrice}>${item.unitPrice * item.quantity}</Text>
             </View>
           ))}
@@ -94,22 +99,35 @@ export default function OrderDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.background },
-  scroll: { padding: 16, gap: 16 },
-  title: { fontSize: 26, fontWeight: '900', color: Colors.primary },
-  stepper: { backgroundColor: Colors.surface, borderRadius: 14, padding: 16, gap: 14 },
+  safe: { flex: 1, backgroundColor: CColors.background },
+  scroll: { padding: 16, gap: 14, paddingBottom: 32 },
+  title: { fontSize: 24, fontWeight: '900', color: CColors.primary },
+
+  stepper: {
+    backgroundColor: CColors.surface, borderRadius: 16, padding: 16, gap: 16,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
+  },
+  cancelledCard: { borderLeftWidth: 3, borderLeftColor: CColors.error },
   stepRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  stepDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: Colors.border },
-  stepDotActive: { backgroundColor: Colors.primary },
-  stepLabel: { fontSize: 14, color: Colors.textSecondary },
-  stepLabelActive: { color: Colors.text, fontWeight: '700' },
-  card: { backgroundColor: Colors.surface, borderRadius: 14, padding: 14, gap: 10 },
-  cardTitle: { fontSize: 12, fontWeight: '800', color: Colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 },
+  stepDot: { width: 14, height: 14, borderRadius: 7, backgroundColor: CColors.border },
+  stepDotActive: { backgroundColor: CColors.primary },
+  stepDotCurrent: { width: 18, height: 18, borderRadius: 9, borderWidth: 3, borderColor: CColors.primary, backgroundColor: '#fff' },
+  stepLabel: { fontSize: 14, color: CColors.textSecondary },
+  stepLabelActive: { color: CColors.text, fontWeight: '700' },
+  stepCurrent: { fontSize: 12, color: CColors.primary, fontWeight: '600' },
+
+  card: {
+    backgroundColor: CColors.surface, borderRadius: 16, padding: 14, gap: 10,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
+  },
+  cardTitle: { fontSize: 11, fontWeight: '800', color: CColors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.8 },
   itemRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  itemName: { fontSize: 14, color: Colors.text, flex: 1 },
-  itemPrice: { fontSize: 14, fontWeight: '700', color: Colors.text },
-  divider: { height: 1, backgroundColor: Colors.border },
-  totalLabel: { fontSize: 16, fontWeight: '700', color: Colors.text },
-  totalValue: { fontSize: 20, fontWeight: '900', color: Colors.primary },
-  notes: { fontSize: 14, color: Colors.text },
+  itemName: { fontSize: 14, color: CColors.text, flex: 1 },
+  itemPrice: { fontSize: 14, fontWeight: '700', color: CColors.text },
+  divider: { height: 1, backgroundColor: CColors.border },
+  totalLabel: { fontSize: 16, fontWeight: '700', color: CColors.text },
+  totalValue: { fontSize: 20, fontWeight: '900', color: CColors.primary },
+  notes: { fontSize: 14, color: CColors.text, lineHeight: 20 },
 });

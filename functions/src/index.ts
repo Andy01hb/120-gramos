@@ -1,5 +1,7 @@
 import * as admin from 'firebase-admin';
-admin.initializeApp();
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
 
 export { createPaymentIntent } from './createPaymentIntent';
 export { stripeWebhook } from './stripeWebhook';

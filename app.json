@@ -18,9 +18,10 @@
       "expo-notifications",
       [
         "@stripe/stripe-react-native",
-        { "merchantIdentifier": "" }
-      ],
-      "react-native-reanimated"
+        {
+          "merchantIdentifier": ""
+        }
+      ]
     ],
     "ios": {
       "supportsTablet": true,
@@ -28,6 +29,7 @@
     },
     "android": {
       "package": "com.cienveinte.gramos",
+      "softwareKeyboardLayoutMode": "pan",
       "adaptiveIcon": {
         "backgroundColor": "#0a0a0a",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -38,6 +40,13 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "6345d67f-d018-43e2-a983-159233ca4097"
+      }
+    },
+    "owner": "andy01hb"
   }
 }

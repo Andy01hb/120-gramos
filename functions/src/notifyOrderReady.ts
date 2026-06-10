@@ -1,9 +1,5 @@
 import * as admin from 'firebase-admin';
 import { onDocumentUpdated } from 'firebase-functions/v2/firestore';
-import { Expo } from 'expo-server-sdk';
-import type { ExpoPushMessage } from 'expo-server-sdk';
-
-const expo = new Expo();
 
 export const notifyOrderReady = onDocumentUpdated('orders/{orderId}', async event => {
   const before = event.data?.before.data();
@@ -20,11 +16,15 @@ export const notifyOrderReady = onDocumentUpdated('orders/{orderId}', async even
   const userSnap = await admin.firestore().doc(`users/${userId}`).get();
   const pushToken: string | null = userSnap.data()?.pushToken ?? null;
 
-  if (!pushToken || !Expo.isExpoPushToken(pushToken)) return;
+  if (!pushToken) return;
 
-  const message: ExpoPushMessage = {
+  const { Expo } = await import('expo-server-sdk');
+  if (!Expo.isExpoPushToken(pushToken)) return;
+
+  const expo = new Expo();
+  const message = {
     to: pushToken,
-    sound: 'default',
+    sound: 'default' as const,
     title: '¡Tu pedido está listo! 🎉',
     body: `El pedido #${orderNum} está listo para recoger en el stand.`,
     data: { orderId },

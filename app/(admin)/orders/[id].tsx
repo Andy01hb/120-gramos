@@ -103,8 +103,9 @@ export default function AdminOrderDetailScreen() {
             <View key={item.productId ?? i} style={styles.itemRow}>
               <View style={styles.itemInfo}>
                 <Text style={styles.itemName}>{item.quantity}× {item.name}</Text>
-                {item.flavors.length > 0 && <Text style={styles.itemSub}>Sabor: {item.flavors.join(', ')}</Text>}
-                {item.addBoba && <Text style={styles.itemSub}>+ Boba</Text>}
+                {item.selections?.map(s => (
+                  <Text key={s.optionId} style={styles.itemSub}>{s.question}: {s.answer}{s.extraPrice > 0 ? ` +$${s.extraPrice}` : ''}</Text>
+                ))}
               </View>
               <Text style={styles.itemPrice}>${item.unitPrice * item.quantity}</Text>
             </View>

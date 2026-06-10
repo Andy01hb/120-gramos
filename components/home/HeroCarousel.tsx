@@ -1,77 +1,115 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, Image, Text, StyleSheet, FlatList, Dimensions, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
-import { Colors } from '../../constants/colors';
+import { View, Image, StyleSheet, FlatList, Animated } from 'react-native';
+import { CColors } from '../../constants/colors';
 
-const { width } = Dimensions.get('window');
+interface Props {
+  imageUrls: string[];
+  loading?: boolean;
+}
 
-const SLIDES = [
-  { id: '1', title: 'Iced Coffee\nLatte', tag: 'Destacado', image: require('../../assets/hero1.jpg') },
-  { id: '2', title: 'Matcha\nLatte', tag: 'Recomendado', image: require('../../assets/hero2.jpg') },
-  { id: '3', title: 'Taro\nLatte', tag: 'Nuevo', image: require('../../assets/hero3.jpg') },
-];
+function HeroSkeleton() {
+  const opacity = useRef(new Animated.Value(0.3)).current;
+  useEffect(() => {
+    const anim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacity, { toValue: 0.7, duration: 700, useNativeDriver: true }),
+        Animated.timing(opacity, { toValue: 0.3, duration: 700, useNativeDriver: true }),
+      ])
+    );
+    anim.start();
+    return () => anim.stop();
+  }, []);
+  return <Animated.View style={[styles.skeleton, { opacity }]} />;
+}
 
-export function HeroCarousel() {
+export function HeroCarousel({ imageUrls, loading }: Props) {
   const [active, setActive] = useState(0);
+  const [containerWidth, setContainerWidth] = useState(0);
   const ref = useRef<FlatList>(null);
-  const router = useRouter();
 
   useEffect(() => {
+    if (containerWidth === 0 || imageUrls.length < 2) return;
     const timer = setInterval(() => {
-      const next = (active + 1) % SLIDES.length;
+      const next = (active + 1) % imageUrls.length;
       ref.current?.scrollToIndex({ index: next, animated: true });
       setActive(next);
     }, 4000);
     return () => clearInterval(timer);
-  }, [active]);
+  }, [active, containerWidth, imageUrls.length]);
+
+  if (containerWidth === 0 || loading || imageUrls.length === 0) {
+    return (
+      <View
+        style={styles.wrapper}
+        onLayout={e => setContainerWidth(e.nativeEvent.layout.width)}
+      >
+        <View style={styles.placeholder}>
+          {containerWidth > 0 && <HeroSkeleton />}
+        </View>
+      </View>
+    );
+  }
 
   return (
-    <View>
+    <View style={styles.wrapper} onLayout={e => setContainerWidth(e.nativeEvent.layout.width)}>
       <FlatList
         ref={ref}
-        data={SLIDES}
+        data={imageUrls}
         horizontal
         pagingEnabled
+        scrollEnabled={false}
         showsHorizontalScrollIndicator={false}
-        keyExtractor={i => i.id}
+        keyExtractor={(_, i) => String(i)}
+        getItemLayout={(_, index) => ({ length: containerWidth, offset: containerWidth * index, index })}
         onMomentumScrollEnd={e => {
-          const idx = Math.round(e.nativeEvent.contentOffset.x / width);
+          const idx = Math.round(e.nativeEvent.contentOffset.x / containerWidth);
           setActive(idx);
         }}
         renderItem={({ item }) => (
-          <TouchableOpacity
-            activeOpacity={0.9}
-            style={styles.slide}
-            onPress={() => router.push('/(customer)/menu')}
-          >
-            <Image source={item.image} style={styles.image} resizeMode="cover" />
-            <View style={styles.overlay}>
-              <Text style={styles.tag}>{item.tag}</Text>
-              <Text style={styles.title}>{item.title}</Text>
-            </View>
-          </TouchableOpacity>
+          <View style={[styles.slide, { width: containerWidth }]}>
+            <Image source={{ uri: item }} style={styles.image} resizeMode="cover" />
+          </View>
         )}
       />
-      <View style={styles.dots}>
-        {SLIDES.map((_, i) => (
-          <View key={i} style={[styles.dot, i === active && styles.dotActive]} />
-        ))}
-      </View>
+
+      {imageUrls.length > 1 && (
+        <View style={styles.dots} pointerEvents="none">
+          {imageUrls.map((_, i) => (
+            <View key={i} style={[styles.dot, i === active && styles.dotActive]} />
+          ))}
+        </View>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  slide: { width, height: 200, overflow: 'hidden' },
-  image: { width: '100%', height: '100%' },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.35)',
-    justifyContent: 'flex-end', padding: 16,
+  wrapper: {
+    marginHorizontal: 16,
+    marginTop: 12,
+    borderRadius: 20,
+    overflow: 'hidden',
+    backgroundColor: CColors.surface,
   },
-  tag: { fontSize: 10, fontWeight: '800', letterSpacing: 2, color: Colors.primary, textTransform: 'uppercase' },
-  title: { fontSize: 22, fontWeight: '900', color: '#fff', lineHeight: 26 },
-  dots: { flexDirection: 'row', justifyContent: 'center', gap: 5, marginTop: 10 },
-  dot: { width: 5, height: 5, borderRadius: 3, backgroundColor: Colors.border },
-  dotActive: { width: 14, backgroundColor: Colors.primary },
+  placeholder: {
+    height: 200,
+    backgroundColor: CColors.surface,
+  },
+  skeleton: {
+    flex: 1,
+    backgroundColor: CColors.surfaceAlt,
+  },
+  slide: { height: 200, overflow: 'hidden' },
+  image: { width: '100%', height: '100%' },
+  dots: {
+    position: 'absolute',
+    bottom: 10,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 5,
+  },
+  dot: { width: 5, height: 5, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.4)' },
+  dotActive: { width: 16, backgroundColor: CColors.primary },
 });

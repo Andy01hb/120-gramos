@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Slot, useRouter, useSegments } from 'expo-router';
-import { StripeProvider } from '@stripe/stripe-react-native';
+import { StripeWrapper } from '../components/StripeWrapper';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
 import { StandProvider } from '../contexts/StandContext';
 import { CartProvider } from '../contexts/CartContext';
@@ -17,7 +17,7 @@ Notifications.setNotificationHandler({
 });
 
 function RootGuard() {
-  const { user, loading } = useAuth();
+  const { user, loading, previewMode } = useAuth();
   const router = useRouter();
   const segments = useSegments();
   const [offline, setOffline] = useState(false);
@@ -39,14 +39,14 @@ function RootGuard() {
       if (!inAuth && segments[0] !== 'splash') router.replace('/login');
       return;
     }
-    if (user.role === 'admin' && !inAdmin) {
-      router.replace('/(admin)/orders');
+    if (user.role === 'admin' && !inAdmin && !previewMode) {
+      router.replace('/(admin)');
       return;
     }
     if (user.role === 'customer' && !inCustomer) {
       router.replace('/(customer)');
     }
-  }, [user, loading, segments[0]]);
+  }, [user, loading, segments[0], previewMode]);
 
   return (
     <>
@@ -61,7 +61,7 @@ export default function RootLayout() {
   if (!stripeKey) throw new Error('Missing env var: EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY');
 
   return (
-    <StripeProvider publishableKey={stripeKey}>
+    <StripeWrapper publishableKey={stripeKey}>
       <AuthProvider>
         <StandProvider>
           <CartProvider>
@@ -69,6 +69,6 @@ export default function RootLayout() {
           </CartProvider>
         </StandProvider>
       </AuthProvider>
-    </StripeProvider>
+    </StripeWrapper>
   );
 }

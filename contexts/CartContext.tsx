@@ -21,8 +21,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setItems(prev => {
       const existing = prev.find(i =>
         i.productId === newItem.productId &&
-        JSON.stringify(i.flavors) === JSON.stringify(newItem.flavors) &&
-        i.addBoba === newItem.addBoba
+        JSON.stringify(i.selections) === JSON.stringify(newItem.selections)
       );
       if (existing) {
         return prev.map(i => i === existing ? { ...i, quantity: i.quantity + newItem.quantity } : i);

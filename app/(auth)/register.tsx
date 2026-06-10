@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView, useWindowDimensions } from 'react-native';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { useRouter } from 'expo-router';
 import { auth } from '../../lib/firebase';
 import { createUser } from '../../lib/firestore';
 import { Button } from '../../components/ui/Button';
@@ -28,6 +29,9 @@ export default function RegisterScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const { width } = useWindowDimensions();
+  const isWide = Platform.OS === 'web' && width > 600;
+  const router = useRouter();
 
   async function handleRegister() {
     if (!name.trim() || !email.trim() || password.length < 6) {
@@ -39,23 +43,26 @@ export default function RegisterScreen() {
     try {
       const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
       firebaseUser = cred.user;
-
-      // Push token is non-fatal — getPushToken() swallows its own errors
       const pushToken = await getPushToken();
-
       await createUser(firebaseUser.uid, {
         name: name.trim(),
         email: email.trim(),
         role: 'customer',
         pushToken,
       });
-      // AuthContext detects login and redirects to /(customer)
     } catch (e: any) {
-      // If Firestore write failed after auth account was created, clean up the orphan
-      if (firebaseUser) {
-        try { await firebaseUser.delete(); } catch {}
+      if (e.code === 'auth/email-already-in-use') {
+        Alert.alert(
+          'Cuenta existente',
+          'Ya existe una cuenta con este correo electrónico.',
+          [
+            { text: 'Cancelar', style: 'cancel' },
+            { text: 'Iniciar sesión', onPress: () => router.replace('/(auth)/login') },
+          ]
+        );
+      } else {
+        Alert.alert('Error', e.message ?? 'No se pudo crear la cuenta');
       }
-      Alert.alert('Error', e.message ?? 'No se pudo crear la cuenta');
     } finally {
       setLoading(false);
     }
@@ -63,12 +70,16 @@ export default function RegisterScreen() {
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.inner}>
-        <Text style={styles.title}>Crear cuenta</Text>
-        <TextInput style={styles.input} placeholder="Tu nombre" placeholderTextColor={Colors.textSecondary} value={name} onChangeText={setName} />
-        <TextInput style={styles.input} placeholder="Correo electrónico" placeholderTextColor={Colors.textSecondary} value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
-        <TextInput style={styles.input} placeholder="Contraseña (mín. 6 caracteres)" placeholderTextColor={Colors.textSecondary} value={password} onChangeText={setPassword} secureTextEntry />
-        <Button label="Crear cuenta" onPress={handleRegister} loading={loading} style={{ marginTop: 8 }} />
+      <ScrollView contentContainerStyle={[styles.scroll, isWide && styles.scrollWide]} keyboardShouldPersistTaps="handled">
+        <View style={[styles.card, isWide && styles.cardWide]}>
+          <Text style={styles.title}>Crear cuenta</Text>
+          <View style={styles.form}>
+            <TextInput style={styles.input} placeholder="Tu nombre" placeholderTextColor={Colors.textSecondary} value={name} onChangeText={setName} />
+            <TextInput style={styles.input} placeholder="Correo electrónico" placeholderTextColor={Colors.textSecondary} value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
+            <TextInput style={styles.input} placeholder="Contraseña (mín. 6 caracteres)" placeholderTextColor={Colors.textSecondary} value={password} onChangeText={setPassword} secureTextEntry />
+            <Button label="Crear cuenta" onPress={handleRegister} loading={loading} style={{ marginTop: 8 }} />
+          </View>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -76,10 +87,18 @@ export default function RegisterScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
-  inner: { padding: 24, gap: 12, justifyContent: 'center', flexGrow: 1 },
-  title: { fontSize: 28, fontWeight: '900', color: Colors.primary, marginBottom: 16 },
+  scroll: { flexGrow: 1, justifyContent: 'center', padding: 24 },
+  scrollWide: { alignItems: 'center', paddingVertical: 64 },
+  card: { width: '100%' },
+  cardWide: {
+    maxWidth: 440, width: '100%',
+    backgroundColor: Colors.surface, borderRadius: 20,
+    borderWidth: 1, borderColor: Colors.border, padding: 48,
+  },
+  title: { fontSize: 28, fontWeight: '900', color: Colors.primary, marginBottom: 24 },
+  form: { gap: 12 },
   input: {
-    backgroundColor: Colors.surface, borderRadius: 12, padding: 14,
+    backgroundColor: Colors.background, borderRadius: 12, padding: 14,
     color: Colors.text, fontSize: 15, borderWidth: 1, borderColor: Colors.border,
   },
 });
