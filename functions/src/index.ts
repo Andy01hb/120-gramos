@@ -6,3 +6,5 @@ if (!admin.apps.length) {
 export { createPaymentIntent } from './createPaymentIntent';
 export { stripeWebhook } from './stripeWebhook';
 export { notifyOrderReady } from './notifyOrderReady';
+export { createCounterOrder } from './createCounterOrder';
+export { clipWebhook } from './clipWebhook';

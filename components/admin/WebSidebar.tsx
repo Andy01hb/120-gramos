@@ -7,13 +7,14 @@ import { Colors } from '../../constants/colors';
 interface NavItem {
   label: string;
   icon: string;
-  href: '/(admin)' | '/(admin)/orders' | '/(admin)/stand' | '/(admin)/menu-mgmt' | '/(admin)/profile';
+  href: '/(admin)' | '/(admin)/orders' | '/(admin)/pos' | '/(admin)/stand' | '/(admin)/menu-mgmt' | '/(admin)/profile';
   segment: string;
 }
 
 const NAV: NavItem[] = [
   { label: 'Dashboard',  icon: '◈', href: '/(admin)',            segment: 'index'     },
   { label: 'Pedidos',    icon: '◷', href: '/(admin)/orders',     segment: 'orders'    },
+  { label: 'Caja',       icon: '▭', href: '/(admin)/pos',        segment: 'pos'       },
   { label: 'Stand',      icon: '⬡', href: '/(admin)/stand',      segment: 'stand'     },
   { label: 'Menú',       icon: '≡', href: '/(admin)/menu-mgmt',  segment: 'menu-mgmt' },
   { label: 'Perfil',     icon: '○', href: '/(admin)/profile',    segment: 'profile'   },

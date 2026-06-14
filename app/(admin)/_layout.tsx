@@ -6,6 +6,7 @@ import { WebSidebar } from '../../components/admin/WebSidebar';
 const HREFS = [
   '/(admin)',
   '/(admin)/orders',
+  '/(admin)/pos',
   '/(admin)/stand',
   '/(admin)/menu-mgmt',
   '/(admin)/profile',
@@ -23,6 +24,7 @@ export default function AdminLayout() {
         const tabItems = [
           { name: 'index',    label: 'Dashboard', icon: 'home' as const     },
           { name: 'orders',   label: 'Pedidos',   icon: 'orders' as const   },
+          { name: 'pos',      label: 'Caja',      icon: 'caja' as const     },
           { name: 'stand',    label: 'Stand',     icon: 'stand' as const    },
           { name: 'menu-mgmt', label: 'Menú',     icon: 'menu-mgmt' as const },
           { name: 'profile',  label: 'Perfil',    icon: 'profile' as const  },
@@ -38,6 +40,7 @@ export default function AdminLayout() {
     >
       <Tabs.Screen name="index" />
       <Tabs.Screen name="orders" />
+      <Tabs.Screen name="pos" />
       <Tabs.Screen name="stand" />
       <Tabs.Screen name="menu-mgmt" />
       <Tabs.Screen name="profile" />

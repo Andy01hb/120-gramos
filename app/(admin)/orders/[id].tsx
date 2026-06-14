@@ -29,6 +29,15 @@ const STATUS_COLOR: Record<OrderStatus, string> = {
   cancelled: Colors.error,
 };
 
+// Older orders without paymentMethod are app/web (Stripe).
+function payBadge(order: Order): { label: string; color: string } {
+  switch (order.paymentMethod) {
+    case 'clip': return { label: '💳 Pago en caja (Clip)', color: '#5B8DEF' };
+    case 'cash': return { label: '💵 Pago en efectivo', color: Colors.success };
+    default:     return { label: '📱 Pago en la app', color: Colors.primary };
+  }
+}
+
 export default function AdminOrderDetailScreen() {
   const params = useLocalSearchParams<{ id: string }>();
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
@@ -95,6 +104,9 @@ export default function AdminOrderDetailScreen() {
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Cliente</Text>
           <Text style={styles.clientName}>{order.userName}</Text>
+          <View style={[styles.payPill, { borderColor: payBadge(order).color }]}>
+            <Text style={[styles.payPillText, { color: payBadge(order).color }]}>{payBadge(order).label}</Text>
+          </View>
         </View>
 
         <View style={styles.card}>
@@ -154,6 +166,8 @@ const styles = StyleSheet.create({
   card: { backgroundColor: Colors.surface, borderRadius: 14, padding: 14, gap: 10 },
   cardTitle: { fontSize: 11, fontWeight: '800', color: Colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 },
   clientName: { fontSize: 18, fontWeight: '700', color: Colors.text },
+  payPill: { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, borderWidth: 1 },
+  payPillText: { fontSize: 12, fontWeight: '800', letterSpacing: 0.2 },
   itemRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   itemInfo: { flex: 1, gap: 2 },
   itemName: { fontSize: 14, fontWeight: '700', color: Colors.text },

@@ -75,6 +75,8 @@ export type OrderStatus =
   | 'completed'
   | 'cancelled';
 
+export type PaymentMethod = 'stripe' | 'clip' | 'cash';
+
 export interface Order {
   id: string;
   userId: string;
@@ -84,6 +86,14 @@ export interface Order {
   status: OrderStatus;
   paymentIntentId: string;
   paymentStatus: 'pending' | 'paid' | 'failed';
+  /** How the order was paid. Older orders without this field are Stripe (app/web). */
+  paymentMethod?: PaymentMethod;
+  /** Clip PinPad request id (only for counter card orders). */
+  clipRequestId?: string;
+  /** Amount actually captured by Clip (may include tip). */
+  amountPaid?: number;
+  /** Last 4 digits of the card, when paid via Clip terminal. */
+  cardLastDigits?: string;
   notes: string | null;
   createdAt: Timestamp | Date;
   updatedAt: Timestamp | Date;

@@ -2,7 +2,7 @@ import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { Svg, Path, Rect, Circle, Line } from 'react-native-svg';
 import { Colors } from '../../constants/colors';
 
-interface TabItem { name: string; label: string; icon: 'home' | 'menu' | 'orders' | 'profile' | 'stand' | 'menu-mgmt' }
+interface TabItem { name: string; label: string; icon: 'home' | 'menu' | 'orders' | 'profile' | 'stand' | 'menu-mgmt' | 'caja' }
 
 function Icon({ type, active }: { type: TabItem['icon']; active: boolean }) {
   const color = active ? '#000' : Colors.textSecondary;
@@ -40,6 +40,13 @@ function Icon({ type, active }: { type: TabItem['icon']; active: boolean }) {
     <Svg width={w} height={h} viewBox="0 0 24 24" fill="none">
       <Path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" stroke={color} strokeWidth={1.8} fill={active ? color : 'none'} />
       <Path d="M9 22V12h6v10" stroke={active ? '#000' : color} strokeWidth={1.8} />
+    </Svg>
+  );
+  if (type === 'caja') return (
+    <Svg width={w} height={h} viewBox="0 0 24 24" fill="none">
+      <Rect x="2" y="5" width="20" height="14" rx="2" stroke={color} strokeWidth={1.8} fill={active ? color : 'none'} />
+      <Line x1="2" y1="10" x2="22" y2="10" stroke={active ? '#000' : color} strokeWidth={1.8} />
+      <Line x1="6" y1="15" x2="10" y2="15" stroke={active ? '#000' : color} strokeWidth={1.8} strokeLinecap="round" />
     </Svg>
   );
   // menu-mgmt

@@ -45,6 +45,15 @@ const STATUS_LABEL: Record<OrderStatus, string> = {
   cancelled: 'Cancelado',
 };
 
+// Where the order was paid. Older orders without paymentMethod are app/web (Stripe).
+function payBadge(order: Order): { label: string; color: string } {
+  switch (order.paymentMethod) {
+    case 'clip': return { label: '💳 Caja', color: '#5B8DEF' };
+    case 'cash': return { label: '💵 Efectivo', color: Colors.success };
+    default:     return { label: '📱 App', color: Colors.primary };
+  }
+}
+
 function elapsedLabel(createdAt: any): string {
   const ms = typeof createdAt?.toMillis === 'function' ? createdAt.toMillis()
     : createdAt instanceof Date ? createdAt.getTime() : 0;
@@ -70,6 +79,9 @@ function ActiveOrderCard({ order, onAction, loading }: {
           <Text style={styles.orderId}>#{order.id.slice(-4).toUpperCase()}</Text>
           <View style={[styles.statusPill, { backgroundColor: color }]}>
             <Text style={styles.statusPillText}>{STATUS_LABEL[order.status]}</Text>
+          </View>
+          <View style={[styles.payPill, { borderColor: payBadge(order).color }]}>
+            <Text style={[styles.payPillText, { color: payBadge(order).color }]}>{payBadge(order).label}</Text>
           </View>
         </View>
         <Text style={styles.elapsed}>{elapsedLabel(order.createdAt)}</Text>
@@ -135,6 +147,9 @@ function DoneOrderCard({ order }: { order: Order }) {
           <Text style={styles.orderId}>#{order.id.slice(-4).toUpperCase()}</Text>
           <View style={[styles.statusPill, { backgroundColor: color + '30' }]}>
             <Text style={[styles.statusPillText, { color }]}>{STATUS_LABEL[order.status]}</Text>
+          </View>
+          <View style={[styles.payPill, { borderColor: payBadge(order).color }]}>
+            <Text style={[styles.payPillText, { color: payBadge(order).color }]}>{payBadge(order).label}</Text>
           </View>
         </View>
         <Text style={styles.elapsed}>{elapsedLabel(order.createdAt)}</Text>
@@ -276,6 +291,8 @@ const styles = StyleSheet.create({
   orderId: { fontSize: 18, fontWeight: '900', color: Colors.text },
   statusPill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
   statusPillText: { fontSize: 11, fontWeight: '800', color: '#fff', letterSpacing: 0.3 },
+  payPill: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20, borderWidth: 1 },
+  payPillText: { fontSize: 10, fontWeight: '800', letterSpacing: 0.2 },
   elapsed: { fontSize: 11, color: Colors.textSecondary },
 
   body: { paddingHorizontal: 14, paddingBottom: 14, paddingTop: 8, gap: 10 },

@@ -56,6 +56,7 @@ export const stripeWebhook = onRequest(
           status: 'paid',
           paymentIntentId: intent.id,
           paymentStatus: 'paid',
+          paymentMethod: 'stripe',
           notes: notes ?? null,
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),

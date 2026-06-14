@@ -17,16 +17,20 @@ export function useAdminOrders(statusFilter?: OrderStatus[], fromDate?: Date) {
   useEffect(() => {
     let active = true;
 
-    const constraints: any[] = [where('paymentStatus', '==', 'paid')];
+    // Query by status so we only read the relevant orders (open orders are few),
+    // instead of scanning every paid order ever. A date bound further caps history reads.
+    const constraints: any[] = [];
+    if (statusFilter?.length) constraints.push(where('status', 'in', statusFilter));
     if (fromDate) constraints.push(where('createdAt', '>=', Timestamp.fromDate(fromDate)));
 
-    const q = query(collection(db, 'orders'), ...constraints);
+    const q = constraints.length
+      ? query(collection(db, 'orders'), ...constraints)
+      : query(collection(db, 'orders'));
 
     const unsubscribe = onSnapshot(q, snap => {
       if (!active) return;
-      let all = snap.docs.map(d => ({ id: d.id, ...d.data() } as Order));
+      const all = snap.docs.map(d => ({ id: d.id, ...d.data() } as Order));
       all.sort((a, b) => toMs(b.createdAt) - toMs(a.createdAt));
-      if (statusFilter?.length) all = all.filter(o => statusFilter.includes(o.status));
       setOrders(all);
       setLoading(false);
     });
