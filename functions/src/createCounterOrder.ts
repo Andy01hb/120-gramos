@@ -36,6 +36,10 @@ export const createCounterOrder = onCall({ secrets: [clipAuthToken] }, async (re
   if (paymentMethod !== 'clip' && paymentMethod !== 'cash') {
     throw new HttpsError('invalid-argument', 'Método de pago inválido');
   }
+  // Every counter order must be under a name so the kitchen knows who to give it to.
+  const name = customerName?.trim();
+  if (!name) throw new HttpsError('invalid-argument', 'Falta el nombre del cliente');
+  if (name.length > 60) throw new HttpsError('invalid-argument', 'El nombre es demasiado largo');
   if (notes && notes.length > 200) throw new HttpsError('invalid-argument', 'Las notas son demasiado largas');
 
   const subtotal = await validateOrderItems(items);
@@ -44,7 +48,7 @@ export const createCounterOrder = onCall({ secrets: [clipAuthToken] }, async (re
   const orderId = orderRef.id;
   const baseOrder = {
     userId: request.auth.uid,
-    userName: customerName?.trim() || 'Cliente en caja',
+    userName: name,
     items,
     subtotal,
     notes: notes ?? null,

@@ -16,6 +16,7 @@ type Method = 'clip' | 'cash';
 export default function PosScreen() {
   const { items: menu } = useMenu();
   const [cart, setCart] = useState<OrderItem[]>([]);
+  const [customerName, setCustomerName] = useState('');
   const [method, setMethod] = useState<Method>('clip');
   const [selecting, setSelecting] = useState<MenuItem | null>(null);
 
@@ -55,6 +56,7 @@ export default function PosScreen() {
       if (data.paymentStatus === 'paid') {
         setWaitOrderId(null);
         setCart([]);
+        setCustomerName('');
         notify('ok', '✅ Pago aprobado. El pedido se envió a la cocina.');
       } else if (data.paymentStatus === 'failed' || data.status === 'cancelled') {
         setWaitError('El cobro no se completó o fue cancelado en la terminal.');
@@ -100,6 +102,10 @@ export default function PosScreen() {
 
   async function charge() {
     if (cart.length === 0) return;
+    if (!customerName.trim()) {
+      notify('err', '¿A nombre de quién es el pedido? Escribe el nombre del cliente.');
+      return;
+    }
     if (method === 'clip' && !clipSerial) {
       notify('err', 'Primero ingresa el número de serie de tu lector Clip.');
       setEditingSerial(true);
@@ -115,11 +121,13 @@ export default function PosScreen() {
       const res: any = await createCounterOrder({
         items: cart,
         paymentMethod: method,
+        customerName: customerName.trim(),
         ...(method === 'clip' ? { serialNumberPos: clipSerial } : {}),
       });
 
       if (method === 'cash') {
         setCart([]);
+        setCustomerName('');
         notify('ok', '✅ Pedido en efectivo registrado. Enviado a la cocina.');
       } else {
         // Wait for the terminal to confirm via webhook
@@ -160,6 +168,20 @@ export default function PosScreen() {
         <View style={styles.cartCol}>
           <ScrollView contentContainerStyle={styles.cartScrollContent}>
             <Text style={styles.cartTitle}>Pedido {count > 0 ? `· ${count}` : ''}</Text>
+
+            {/* Customer name — required so the kitchen knows who to give it to */}
+            <View style={styles.nameBox}>
+              <Text style={styles.nameLabel}>👤 ¿A nombre de quién?</Text>
+              <TextInput
+                style={styles.nameInput}
+                value={customerName}
+                onChangeText={setCustomerName}
+                placeholder="Nombre del cliente"
+                placeholderTextColor={Colors.textSecondary}
+                autoCapitalize="words"
+                returnKeyType="done"
+              />
+            </View>
 
             {banner && (
               <TouchableOpacity
@@ -403,6 +425,12 @@ const styles = StyleSheet.create({
   },
   cartScrollContent: { padding: 16, gap: 12 },
   cartTitle: { fontSize: 16, fontWeight: '800', color: Colors.text },
+  nameBox: { gap: 6 },
+  nameLabel: { fontSize: 12, fontWeight: '700', color: Colors.textSecondary },
+  nameInput: {
+    backgroundColor: Colors.surface, borderRadius: 10, borderWidth: 1, borderColor: Colors.border,
+    paddingHorizontal: 12, paddingVertical: 11, color: Colors.text, fontSize: 15, fontWeight: '600',
+  },
   banner: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 10, padding: 10, borderWidth: 1 },
   bannerOk: { backgroundColor: '#13251a', borderColor: Colors.success },
   bannerErr: { backgroundColor: '#2a1414', borderColor: Colors.error },
