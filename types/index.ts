@@ -98,3 +98,24 @@ export interface Order {
   createdAt: Timestamp | Date;
   updatedAt: Timestamp | Date;
 }
+
+// ── Stand / horario ───────────────────────────────────────────────────────────
+export interface DaySchedule {
+  closed: boolean;
+  open: string;   // "HH:MM" 24h
+  close: string;  // "HH:MM" 24h
+}
+
+export interface StandSettings {
+  /** 'manual' = el admin abre/cierra a mano; 'auto' = según el horario. */
+  mode: 'manual' | 'auto';
+  /** Estado abierto/cerrado cuando mode === 'manual'. */
+  isOpen: boolean;
+  /** Override para forzar cerrado en modo automático (festivos, etc.). */
+  forceClosed?: boolean;
+  /** Horario semanal. 7 entradas, índice 0 = Domingo (JS getDay). */
+  schedule?: DaySchedule[];
+  location?: string;
+  closedMessage?: string;
+  updatedAt?: Timestamp | Date;
+}

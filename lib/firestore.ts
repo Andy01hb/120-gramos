@@ -1,6 +1,6 @@
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from './firebase';
-import type { AppUser, Order } from '../types';
+import type { AppUser, Order, StandSettings } from '../types';
 
 export async function getUser(uid: string): Promise<AppUser | null> {
   const snap = await getDoc(doc(db, 'users', uid));
@@ -20,5 +20,10 @@ export async function updateOrderStatus(orderId: string, status: Order['status']
 }
 
 export async function setStandOpen(isOpen: boolean): Promise<void> {
-  await setDoc(doc(db, 'settings', 'stand'), { isOpen, updatedAt: serverTimestamp() });
+  // merge so we never wipe schedule/location/mode/etc.
+  await setDoc(doc(db, 'settings', 'stand'), { isOpen, updatedAt: serverTimestamp() }, { merge: true });
+}
+
+export async function updateStandSettings(partial: Partial<StandSettings>): Promise<void> {
+  await setDoc(doc(db, 'settings', 'stand'), { ...partial, updatedAt: serverTimestamp() }, { merge: true });
 }

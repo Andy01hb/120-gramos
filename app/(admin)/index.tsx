@@ -40,7 +40,8 @@ export default function DashboardScreen() {
   const [period, setPeriod] = useState<StatPeriod>('today');
   const { stats, loading } = useDashboardStats(period);
   const { items } = useMenu();
-  const { isOpen, loading: standLoading } = useStand();
+  const { isOpen, loading: standLoading, settings } = useStand();
+  const isAuto = settings?.mode === 'auto';
   const { orders: activeOrders } = useAdminOrders(['paid', 'preparing']);
   const router = useRouter();
   const { width } = useWindowDimensions();
@@ -73,11 +74,11 @@ export default function DashboardScreen() {
           <TouchableOpacity
             style={[styles.standToggle, isOpen ? styles.standOpen : styles.standClosed]}
             onPress={handleStandToggle}
-            disabled={standLoading}
+            disabled={standLoading || isAuto}
           >
             <View style={[styles.standDot, { backgroundColor: isOpen ? Colors.success : Colors.error }]} />
             <Text style={[styles.standText, { color: isOpen ? Colors.success : Colors.error }]}>
-              {isOpen ? 'ABIERTO' : 'CERRADO'}
+              {isOpen ? 'ABIERTO' : 'CERRADO'}{isAuto ? ' · AUTO' : ''}
             </Text>
           </TouchableOpacity>
         </View>

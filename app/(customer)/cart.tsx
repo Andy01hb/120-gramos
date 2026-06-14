@@ -5,6 +5,7 @@ import { useCart } from '../../contexts/CartContext';
 import { useStand } from '../../contexts/StandContext';
 import { Button } from '../../components/ui/Button';
 import { CColors } from '../../constants/colors';
+import { DEFAULT_CLOSED_MESSAGE } from '../../lib/standHours';
 import type { OrderItem } from '../../types';
 
 function CartRow({ item, onRemove, onQty }: { item: OrderItem; onRemove: () => void; onQty: (q: number) => void }) {
@@ -35,7 +36,8 @@ function CartRow({ item, onRemove, onQty }: { item: OrderItem; onRemove: () => v
 
 export default function CartScreen() {
   const { items, removeItem, updateQuantity, subtotal } = useCart();
-  const { isOpen } = useStand();
+  const { isOpen, settings } = useStand();
+  const closedMsg = settings?.closedMessage || DEFAULT_CLOSED_MESSAGE;
   const router = useRouter();
 
   return (
@@ -74,7 +76,7 @@ export default function CartScreen() {
                 onPress={() => router.push('/(customer)/checkout')}
                 disabled={!isOpen}
               />
-              {!isOpen && <Text style={styles.closedNote}>El stand está cerrado por ahora.</Text>}
+              {!isOpen && <Text style={styles.closedNote}>{closedMsg}</Text>}
             </View>
           </View>
         )

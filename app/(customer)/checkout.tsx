@@ -4,12 +4,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useCart } from '../../contexts/CartContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useStand } from '../../contexts/StandContext';
 import { Button } from '../../components/ui/Button';
 import { CColors } from '../../constants/colors';
 
 export default function CheckoutScreen() {
   const { items, subtotal } = useCart();
   const { user } = useAuth();
+  const { settings } = useStand();
+  const location = settings?.location || 'Plaza de los Enamorados · Río Bravo';
   const router = useRouter();
   const [notes, setNotes] = useState('');
   const isWeb = Platform.OS === 'web';
@@ -48,7 +51,7 @@ export default function CheckoutScreen() {
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Datos de recogida</Text>
           <Text style={styles.infoRow}>👤 {user?.name}</Text>
-          <Text style={styles.infoRow}>📍 Plaza de los Enamorados · Río Bravo</Text>
+          <Text style={styles.infoRow}>📍 {location}</Text>
         </View>
 
         <View style={styles.card}>

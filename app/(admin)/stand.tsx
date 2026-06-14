@@ -10,6 +10,7 @@ import { useHomeSections } from '../../hooks/useHomeSections';
 import { useCategories } from '../../hooks/useCategories';
 import { useMenu } from '../../hooks/useMenu';
 import { setStandOpen } from '../../lib/firestore';
+import { StandHoursEditor } from '../../components/admin/StandHoursEditor';
 import { Colors } from '../../constants/colors';
 import type { HomeSection, MenuItem } from '../../types';
 
@@ -365,7 +366,8 @@ function SectionEditorCard({ section, allItems, onUpdate, onDelete, onMoveUp, on
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
 export default function StandScreen() {
-  const { isOpen, loading } = useStand();
+  const { isOpen, loading, settings } = useStand();
+  const isAuto = settings?.mode === 'auto';
   const { images } = useCarousel();
   const sections = useHomeSections();
   const categories = useCategories();
@@ -489,14 +491,23 @@ export default function StandScreen() {
             {isOpen ? 'Los clientes pueden hacer pedidos ahora' : 'Los pedidos están deshabilitados'}
           </Text>
         </View>
-        <TouchableOpacity
-          style={[styles.toggleBtn, isOpen ? styles.toggleBtnClose : styles.toggleBtnOpen]}
-          onPress={toggle}
-          disabled={loading}
-        >
-          <Text style={styles.toggleBtnText}>{isOpen ? 'Cerrar el stand' : 'Abrir el stand'}</Text>
-        </TouchableOpacity>
-        <Text style={styles.note}>Este cambio afecta a todos los clientes en tiempo real.</Text>
+        {isAuto ? (
+          <Text style={styles.note}>🕒 Modo automático: el stand abre y cierra solo según el horario de abajo.</Text>
+        ) : (
+          <>
+            <TouchableOpacity
+              style={[styles.toggleBtn, isOpen ? styles.toggleBtnClose : styles.toggleBtnOpen]}
+              onPress={toggle}
+              disabled={loading}
+            >
+              <Text style={styles.toggleBtnText}>{isOpen ? 'Cerrar el stand' : 'Abrir el stand'}</Text>
+            </TouchableOpacity>
+            <Text style={styles.note}>Este cambio afecta a todos los clientes en tiempo real.</Text>
+          </>
+        )}
+
+        {/* ── Horario y local ── */}
+        <StandHoursEditor />
 
         {/* ── Carousel images ── */}
         <Text style={styles.sectionTitle}>Imágenes del carrusel</Text>

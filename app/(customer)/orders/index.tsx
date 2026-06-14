@@ -6,6 +6,7 @@ import { useCart } from '../../../contexts/CartContext';
 import { useStand } from '../../../contexts/StandContext';
 import { Button } from '../../../components/ui/Button';
 import { CColors } from '../../../constants/colors';
+import { DEFAULT_CLOSED_MESSAGE } from '../../../lib/standHours';
 import type { Order, OrderItem } from '../../../types';
 
 const STATUS_COLOR: Record<Order['status'], string> = {
@@ -63,7 +64,8 @@ function CartItemRow({ item, onQty, onRemove }: {
 
 export default function OrdersScreen() {
   const { items: cartItems, removeItem, updateQuantity, subtotal } = useCart();
-  const { isOpen } = useStand();
+  const { isOpen, settings } = useStand();
+  const closedMsg = settings?.closedMessage || DEFAULT_CLOSED_MESSAGE;
   const { orders, loading } = useOrders();
   const router = useRouter();
   const isWeb = Platform.OS === 'web';
@@ -93,7 +95,7 @@ export default function OrdersScreen() {
               onPress={() => router.push('/(customer)/checkout')}
               disabled={!isOpen}
             />
-            {!isOpen && <Text style={styles.closedNote}>El stand está cerrado por ahora.</Text>}
+            {!isOpen && <Text style={styles.closedNote}>{closedMsg}</Text>}
           </View>
         </View>
       )}

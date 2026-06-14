@@ -8,6 +8,7 @@ import { CategoryPills } from '../../components/home/CategoryPills';
 import { ProductCardRow } from '../../components/home/ProductCardRow';
 import { SkeletonCard } from '../../components/ui/SkeletonCard';
 import { useStand } from '../../contexts/StandContext';
+import { todayHoursLabel } from '../../lib/standHours';
 import { useMenu } from '../../hooks/useMenu';
 import { useCarousel } from '../../hooks/useCarousel';
 import { useHomeSections } from '../../hooks/useHomeSections';
@@ -49,7 +50,9 @@ function AmberSection({ title, icon, color, floatImageUrl, items }: AmberSection
 }
 
 export default function HomeScreen() {
-  const { isOpen } = useStand();
+  const { isOpen, settings } = useStand();
+  const homeLocation = settings?.location || 'Plaza de los Enamorados · Río Bravo';
+  const todayHours = todayHoursLabel(settings);
   const [category, setCategory] = useState<string>('all');
   const { items, loading, error } = useMenu(category === 'all' ? undefined : category);
   const { items: allItems } = useMenu();
@@ -70,13 +73,16 @@ export default function HomeScreen() {
             <Svg width={13} height={13} viewBox="0 0 24 24">
               <Path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill={CColors.primary} />
             </Svg>
-            <Text style={styles.locationText}>Plaza de los Enamorados · Río Bravo</Text>
+            <Text style={styles.locationText}>{homeLocation}</Text>
           </View>
-          <View style={[styles.statusBadge, { backgroundColor: isOpen ? '#0D2B14' : '#2B0D0D' }]}>
-            <View style={[styles.statusDot, { backgroundColor: isOpen ? CColors.success : CColors.error }]} />
-            <Text style={[styles.statusText, { color: isOpen ? CColors.success : CColors.error }]}>
-              {isOpen ? 'Abierto' : 'Cerrado'}
-            </Text>
+          <View style={{ alignItems: 'flex-end', gap: 2 }}>
+            <View style={[styles.statusBadge, { backgroundColor: isOpen ? '#0D2B14' : '#2B0D0D' }]}>
+              <View style={[styles.statusDot, { backgroundColor: isOpen ? CColors.success : CColors.error }]} />
+              <Text style={[styles.statusText, { color: isOpen ? CColors.success : CColors.error }]}>
+                {isOpen ? 'Abierto' : 'Cerrado'}
+              </Text>
+            </View>
+            {todayHours ? <Text style={styles.hoursText}>{todayHours}</Text> : null}
           </View>
         </View>
       )}
@@ -172,6 +178,7 @@ const styles = StyleSheet.create({
   },
   statusDot: { width: 7, height: 7, borderRadius: 4 },
   statusText: { fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 },
+  hoursText: { fontSize: 10, color: CColors.textSecondary, fontWeight: '600' },
 
   scroll: { gap: 0, paddingBottom: 32 },
   scrollWide: { maxWidth: 1280, alignSelf: 'center' as const, width: '100%' },

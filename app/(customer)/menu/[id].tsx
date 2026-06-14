@@ -8,13 +8,15 @@ import { useCart } from '../../../contexts/CartContext';
 import { useStand } from '../../../contexts/StandContext';
 import { Button } from '../../../components/ui/Button';
 import { CColors } from '../../../constants/colors';
+import { DEFAULT_CLOSED_MESSAGE } from '../../../lib/standHours';
 import type { MenuItem, ProductOption, OptionSelection } from '../../../types';
 
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { addItem } = useCart();
-  const { isOpen } = useStand();
+  const { isOpen, settings } = useStand();
+  const closedMsg = settings?.closedMessage || DEFAULT_CLOSED_MESSAGE;
   const [item, setItem] = useState<MenuItem | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [selections, setSelections] = useState<Record<string, OptionSelection>>({});
@@ -52,7 +54,7 @@ export default function ProductDetailScreen() {
   const total = (item.price + selectionsTotal) * quantity;
 
   function handleAdd() {
-    if (!isOpen) { Alert.alert('Stand cerrado', 'Volvemos el próximo fin de semana.'); return; }
+    if (!isOpen) { Alert.alert('Stand cerrado', closedMsg); return; }
     const missing = getMissingRequired();
     if (missing) { Alert.alert('Falta una opción', `Por favor selecciona: ${missing}`); return; }
 
@@ -118,7 +120,7 @@ export default function ProductDetailScreen() {
         onPress={handleAdd}
         disabled={!isOpen}
       />
-      {!isOpen && <Text style={styles.closedNote}>El stand está cerrado. Volvemos el próximo fin de semana.</Text>}
+      {!isOpen && <Text style={styles.closedNote}>{closedMsg}</Text>}
     </View>
   );
 
