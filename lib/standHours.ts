@@ -36,6 +36,12 @@ function nowInTz(now: Date): { day: number; minutes: number } {
   return { day: Math.max(0, WD_KEYS.indexOf(wd)), minutes: hour * 60 + minute };
 }
 
+/** Current weekday index (0=Sunday) in the stand timezone. */
+export function getStandDayIndex(now: Date = new Date()): number {
+  const wd = new Intl.DateTimeFormat('en-US', { timeZone: STAND_TZ, weekday: 'short' }).format(now);
+  return Math.max(0, ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(wd));
+}
+
 function toMinutes(hhmm: string): number {
   const [h, m] = (hhmm ?? '').split(':').map(n => parseInt(n, 10));
   if (Number.isNaN(h) || Number.isNaN(m)) return NaN;

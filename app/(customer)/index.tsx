@@ -9,6 +9,7 @@ import { ProductCardRow } from '../../components/home/ProductCardRow';
 import { SkeletonCard } from '../../components/ui/SkeletonCard';
 import { useStand } from '../../contexts/StandContext';
 import { todayHoursLabel } from '../../lib/standHours';
+import { HoursCard } from '../../components/customer/HoursCard';
 import { useMenu } from '../../hooks/useMenu';
 import { useCarousel } from '../../hooks/useCarousel';
 import { useHomeSections } from '../../hooks/useHomeSections';
@@ -93,6 +94,7 @@ export default function HomeScreen() {
       >
         <HeroCarousel imageUrls={carouselImages} loading={carouselLoading} />
         <CategoryPills active={category} onChange={setCategory} />
+        <HoursCard />
 
         {error ? (
           <View style={styles.errorBox}>

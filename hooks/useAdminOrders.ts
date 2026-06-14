@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { collection, query, where, onSnapshot, Timestamp } from 'firebase/firestore';
+import { collection, query, where, orderBy, onSnapshot, Timestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import type { Order, OrderStatus } from '../types';
 
@@ -22,10 +22,10 @@ export function useAdminOrders(statusFilter?: OrderStatus[], fromDate?: Date) {
     const constraints: any[] = [];
     if (statusFilter?.length) constraints.push(where('status', 'in', statusFilter));
     if (fromDate) constraints.push(where('createdAt', '>=', Timestamp.fromDate(fromDate)));
+    // orderBy createdAt so the query uses the existing (status, createdAt DESC) index
+    constraints.push(orderBy('createdAt', 'desc'));
 
-    const q = constraints.length
-      ? query(collection(db, 'orders'), ...constraints)
-      : query(collection(db, 'orders'));
+    const q = query(collection(db, 'orders'), ...constraints);
 
     const unsubscribe = onSnapshot(q, snap => {
       if (!active) return;
