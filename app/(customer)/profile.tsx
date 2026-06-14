@@ -8,7 +8,9 @@ import { useRouter } from 'expo-router';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useStand } from '../../contexts/StandContext';
 import { useOrders } from '../../hooks/useOrders';
+import { scheduleSummary } from '../../lib/standHours';
 import { CColors } from '../../constants/colors';
 import type { Order } from '../../types';
 import type { Timestamp } from 'firebase/firestore';
@@ -42,6 +44,9 @@ function formatMemberSince(ts: Timestamp | Date): string {
 
 export default function ProfileScreen() {
   const { user, logout, updateName } = useAuth();
+  const { settings } = useStand();
+  const standLocation = settings?.location || 'Plaza de los Enamorados · Río Bravo, Tamps.';
+  const standSchedule = scheduleSummary(settings) || 'Sáb y Dom · Desde 5:00 PM';
   const { orders } = useOrders();
   const router = useRouter();
 
@@ -205,8 +210,8 @@ export default function ProfileScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>El stand</Text>
           <View style={styles.standCard}>
-            <Text style={styles.standRow}>📍 Plaza de los Enamorados · Río Bravo, Tamps.</Text>
-            <Text style={styles.standRow}>🗓 Sáb y Dom · Desde 5:00 PM</Text>
+            <Text style={styles.standRow}>📍 {standLocation}</Text>
+            <Text style={styles.standRow}>🗓 {standSchedule}</Text>
             <Text style={styles.standRow}>📱 @120gramosriobravo</Text>
           </View>
         </View>

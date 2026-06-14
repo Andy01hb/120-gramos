@@ -71,6 +71,36 @@ export function isStandOpenNow(settings: StandSettings | null, now: Date = new D
   return minutes >= open && minutes < close;
 }
 
+function fmt12(hhmm: string): string {
+  const [h, m] = hhmm.split(':').map(n => parseInt(n, 10));
+  if (Number.isNaN(h) || Number.isNaN(m)) return hhmm;
+  const ap = h < 12 ? 'AM' : 'PM';
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12}:${String(m).padStart(2, '0')} ${ap}`;
+}
+
+/**
+ * Short summary of the open days for a footer, e.g. "Vie, Sáb y Dom · Desde 5:00 PM".
+ * Returns '' if there's no schedule (caller can fall back to a default).
+ */
+export function scheduleSummary(settings: StandSettings | null): string {
+  const sched = settings?.schedule;
+  if (!sched || sched.length !== 7) return '';
+
+  const order = [1, 2, 3, 4, 5, 6, 0]; // Lun→Dom
+  const openIdx = order.filter(di => !sched[di].closed);
+  if (openIdx.length === 0) return 'Cerrado temporalmente';
+
+  const names = openIdx.map(di => DAY_SHORT_ES[di]);
+  const days = names.length === 1
+    ? names[0]
+    : `${names.slice(0, -1).join(', ')} y ${names[names.length - 1]}`;
+
+  const openTimes = new Set(openIdx.map(di => sched[di].open));
+  if (openTimes.size === 1) return `${days} · Desde ${fmt12(sched[openIdx[0]].open)}`;
+  return days;
+}
+
 /** Human-readable today's hours, e.g. "16:00–22:00" or "Cerrado". */
 export function todayHoursLabel(settings: StandSettings | null, now: Date = new Date()): string {
   const sched = settings?.schedule;

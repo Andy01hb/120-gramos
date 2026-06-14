@@ -1,7 +1,6 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter, useSegments } from 'expo-router';
 import { useStand } from '../../contexts/StandContext';
-import { todayHoursLabel } from '../../lib/standHours';
 import { CColors } from '../../constants/colors';
 
 const NAV = [
@@ -14,8 +13,7 @@ const NAV = [
 export function WebTopNav() {
   const router = useRouter();
   const segments = useSegments();
-  const { isOpen, settings } = useStand();
-  const todayHours = todayHoursLabel(settings);
+  const { isOpen } = useStand();
 
   const activeSegment = segments[segments.length - 1] ?? 'index';
 
@@ -42,14 +40,11 @@ export function WebTopNav() {
         })}
       </View>
 
-      <View style={{ alignItems: 'flex-end', gap: 2 }}>
-        <View style={[styles.statusBadge, { backgroundColor: isOpen ? '#0D2B14' : '#2B0D0D' }]}>
-          <View style={[styles.dot, { backgroundColor: isOpen ? CColors.success : CColors.error }]} />
-          <Text style={[styles.statusText, { color: isOpen ? CColors.success : CColors.error }]}>
-            {isOpen ? 'ABIERTO' : 'CERRADO'}
-          </Text>
-        </View>
-        {todayHours ? <Text style={styles.hoursText}>{todayHours}</Text> : null}
+      <View style={[styles.statusBadge, { backgroundColor: isOpen ? '#0D2B14' : '#2B0D0D' }]}>
+        <View style={[styles.dot, { backgroundColor: isOpen ? CColors.success : CColors.error }]} />
+        <Text style={[styles.statusText, { color: isOpen ? CColors.success : CColors.error }]}>
+          {isOpen ? 'ABIERTO' : 'CERRADO'}
+        </Text>
       </View>
     </View>
   );
@@ -80,5 +75,4 @@ const styles = StyleSheet.create({
   },
   dot: { width: 7, height: 7, borderRadius: 4 },
   statusText: { fontSize: 10, fontWeight: '800', letterSpacing: 0.5 },
-  hoursText: { fontSize: 9, color: CColors.textSecondary, fontWeight: '600' },
 });
