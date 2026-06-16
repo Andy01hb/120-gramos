@@ -136,7 +136,7 @@ export default function HomeScreen() {
                 <AmberSection
                   key={sec.id}
                   title={sec.title}
-                  icon={sec.icon ?? '⭐'}
+                  icon={sec.icon ?? ''}
                   iconImageUrl={sec.iconImageUrl}
                   iconSize={sec.iconSize}
                   color={sec.color ?? '#C8960A'}

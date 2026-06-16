@@ -11,6 +11,7 @@ import { useCategories } from '../../hooks/useCategories';
 import { useMenu } from '../../hooks/useMenu';
 import { setStandOpen } from '../../lib/firestore';
 import { StandHoursEditor } from '../../components/admin/StandHoursEditor';
+import Slider from '@react-native-community/slider';
 import { Colors } from '../../constants/colors';
 import { FONT_OPTIONS } from '../../lib/fonts';
 import type { HomeSection, MenuItem } from '../../types';
@@ -251,15 +252,27 @@ function ColorPickerField({ value, onSave }: { value: string; onSave: (hex: stri
 
 function SectionEditorCard({ section, allItems, onUpdate, onDelete, onMoveUp, onMoveDown, isFirst, isLast }: SectionEditorProps) {
   const [title, setTitle] = useState(section.title);
-  const [icon, setIcon] = useState(section.icon ?? '⭐');
+  const [icon, setIcon] = useState(section.icon ?? '');
   const [uploading, setUploading] = useState(false);
   const [uploadingIcon, setUploadingIcon] = useState(false);
+  const [size, setSize] = useState(section.iconSize ?? 26);
   const isTitleFocused = useRef(false);
   const isIconFocused = useRef(false);
+  const isSizeEditing = useRef(false);
+
+  useEffect(() => {
+    if (!isSizeEditing.current) setSize(section.iconSize ?? 26);
+  }, [section.iconSize]);
+
+  function commitSize(n: number) {
+    const c = Math.max(12, Math.min(120, Math.round(n || 0)));
+    setSize(c);
+    onUpdate({ iconSize: c });
+  }
 
   useEffect(() => {
     if (!isTitleFocused.current) setTitle(section.title);
-    if (!isIconFocused.current) setIcon(section.icon ?? '⭐');
+    if (!isIconFocused.current) setIcon(section.icon ?? '');
   }, [section.title, section.icon]);
 
   async function saveTitle() {
@@ -270,7 +283,7 @@ function SectionEditorCard({ section, allItems, onUpdate, onDelete, onMoveUp, on
 
   async function saveIcon() {
     const ic = icon.trim();
-    if (!ic || ic === (section.icon ?? '⭐')) return;
+    if (ic === (section.icon ?? '')) return; // allow empty = no emoji
     await onUpdate({ icon: ic });
   }
 
@@ -356,30 +369,43 @@ function SectionEditorCard({ section, allItems, onUpdate, onDelete, onMoveUp, on
             onChangeText={setIcon}
             onFocus={() => { isIconFocused.current = true; }}
             onBlur={() => { isIconFocused.current = false; saveIcon(); }}
-            placeholder="⭐"
+            placeholder="—"
             placeholderTextColor={Colors.textSecondary}
           />
         </View>
+        {(section.iconImageUrl || (section.icon ?? '')) ? (
+          <TouchableOpacity style={styles.floatRemoveBtn} onPress={() => { setIcon(''); onUpdate({ iconImageUrl: null, icon: '' }); }}>
+            <Text style={styles.floatRemoveText}>Sin ícono</Text>
+          </TouchableOpacity>
+        ) : null}
       </View>
-      <Text style={styles.sizeHint}>PNG cuadrado transparente · 96×96 px. Si subes PNG, se usa en vez del emoji.</Text>
+      <Text style={styles.sizeHint}>PNG cuadrado transparente · 96×96 px. Si subes PNG, se usa en vez del emoji. Deja el emoji vacío (o toca "Sin ícono") para no mostrar nada.</Text>
 
-      {/* Icon size */}
-      <View style={styles.stepperRow}>
-        <Text style={styles.stepperLabel}>Tamaño del ícono: {section.iconSize ?? 26} px</Text>
-        <View style={styles.stepper}>
-          <TouchableOpacity
-            style={styles.stepBtn}
-            onPress={() => onUpdate({ iconSize: Math.max(16, (section.iconSize ?? 26) - 4) })}
-          >
-            <Text style={styles.stepBtnText}>−</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.stepBtn}
-            onPress={() => onUpdate({ iconSize: Math.min(60, (section.iconSize ?? 26) + 4) })}
-          >
-            <Text style={styles.stepBtnText}>+</Text>
-          </TouchableOpacity>
-        </View>
+      {/* Icon size: slider + numeric input */}
+      <Text style={styles.fieldLabel}>TAMAÑO DEL ÍCONO</Text>
+      <View style={styles.sizeRow}>
+        <Slider
+          style={{ flex: 1 }}
+          minimumValue={12}
+          maximumValue={120}
+          step={1}
+          value={size}
+          onValueChange={setSize}
+          onSlidingComplete={commitSize}
+          minimumTrackTintColor={Colors.primary}
+          maximumTrackTintColor={Colors.border}
+          thumbTintColor={Colors.primary}
+        />
+        <TextInput
+          style={[styles.input, styles.sizeInput]}
+          value={String(size)}
+          onFocus={() => { isSizeEditing.current = true; }}
+          onChangeText={(t) => { const n = parseInt(t.replace(/[^0-9]/g, ''), 10); setSize(Number.isNaN(n) ? 0 : n); }}
+          onBlur={() => { isSizeEditing.current = false; commitSize(size); }}
+          keyboardType="number-pad"
+          maxLength={3}
+        />
+        <Text style={styles.subLabel}>px</Text>
       </View>
 
       {/* Colors */}
@@ -806,14 +832,8 @@ const styles = StyleSheet.create({
   },
   subLabel: { fontSize: 10, color: Colors.textSecondary, marginBottom: 4 },
   sizeHint: { fontSize: 11, color: Colors.textSecondary, marginTop: 6, marginBottom: 2 },
-  stepperRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 },
-  stepperLabel: { fontSize: 13, color: Colors.text, fontWeight: '600' },
-  stepper: { flexDirection: 'row', gap: 8 },
-  stepBtn: {
-    width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1, borderColor: Colors.border, backgroundColor: Colors.surfaceAlt,
-  },
-  stepBtnText: { fontSize: 20, color: Colors.text, fontWeight: '700' },
+  sizeRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  sizeInput: { width: 64, textAlign: 'center' },
   fontRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   fontChip: {
     paddingHorizontal: 14, paddingVertical: 9, borderRadius: 20,
