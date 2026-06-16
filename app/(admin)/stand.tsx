@@ -12,6 +12,7 @@ import { useMenu } from '../../hooks/useMenu';
 import { setStandOpen } from '../../lib/firestore';
 import { StandHoursEditor } from '../../components/admin/StandHoursEditor';
 import { Colors } from '../../constants/colors';
+import { FONT_OPTIONS } from '../../lib/fonts';
 import type { HomeSection, MenuItem } from '../../types';
 
 // ─── Upload helpers ───────────────────────────────────────────────────────────
@@ -76,6 +77,31 @@ async function pickAndUploadFloatImage(): Promise<string> {
         }
       } catch (err: any) { reject(err); return; }
       const filename = `${Date.now()}_${file.name}`;
+      const storageRef = ref(getStorage(app), `home/${filename}`);
+      await uploadBytes(storageRef, file, { contentType: file.type });
+      resolve(await getDownloadURL(storageRef));
+    };
+    input.click();
+  });
+}
+
+async function pickAndUploadIcon(): Promise<string> {
+  return new Promise((resolve, reject) => {
+    if (typeof document === 'undefined') { reject(new Error('Solo disponible en web')); return; }
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/png,image/*';
+    input.onchange = async (e: any) => {
+      const file = e.target.files?.[0];
+      if (!file) { reject(new Error('No se seleccionó archivo')); return; }
+      try {
+        const { width, height } = await getImageDimensions(file);
+        if (width < 48 || height < 48) {
+          reject(new Error(`Ícono demasiado pequeño: ${width}×${height} px.\nRecomendado: 96×96 px (cuadrado, PNG transparente).`));
+          return;
+        }
+      } catch (err: any) { reject(err); return; }
+      const filename = `icon_${Date.now()}_${file.name}`;
       const storageRef = ref(getStorage(app), `home/${filename}`);
       await uploadBytes(storageRef, file, { contentType: file.type });
       resolve(await getDownloadURL(storageRef));
@@ -227,6 +253,7 @@ function SectionEditorCard({ section, allItems, onUpdate, onDelete, onMoveUp, on
   const [title, setTitle] = useState(section.title);
   const [icon, setIcon] = useState(section.icon ?? '⭐');
   const [uploading, setUploading] = useState(false);
+  const [uploadingIcon, setUploadingIcon] = useState(false);
   const isTitleFocused = useRef(false);
   const isIconFocused = useRef(false);
 
@@ -255,6 +282,16 @@ function SectionEditorCard({ section, allItems, onUpdate, onDelete, onMoveUp, on
     } catch (e: any) {
       if (e.message !== 'No se seleccionó archivo') Alert.alert('Error', e?.message ?? 'No se pudo subir.');
     } finally { setUploading(false); }
+  }
+
+  async function uploadIcon() {
+    setUploadingIcon(true);
+    try {
+      const url = await pickAndUploadIcon();
+      await onUpdate({ iconImageUrl: url });
+    } catch (e: any) {
+      if (e.message !== 'No se seleccionó archivo') Alert.alert('Error', e?.message ?? 'No se pudo subir.');
+    } finally { setUploadingIcon(false); }
   }
 
   async function toggleProduct(productId: string) {
@@ -294,10 +331,25 @@ function SectionEditorCard({ section, allItems, onUpdate, onDelete, onMoveUp, on
         </View>
       </View>
 
-      {/* Icon + color */}
-      <View style={styles.iconColorRow}>
+      {/* Icon (PNG or emoji) */}
+      <Text style={styles.fieldLabel}>ÍCONO DE LA SECCIÓN</Text>
+      <View style={styles.iconRow}>
+        {section.iconImageUrl ? (
+          <View style={styles.iconPreviewWrap}>
+            <Image source={{ uri: section.iconImageUrl }} style={styles.iconPreview} resizeMode="contain" />
+            <TouchableOpacity style={styles.floatRemoveBtn} onPress={() => onUpdate({ iconImageUrl: null })}>
+              <Text style={styles.floatRemoveText}>✕ Quitar PNG</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity style={styles.iconUploadBtn} onPress={uploadIcon} disabled={uploadingIcon}>
+            {uploadingIcon
+              ? <ActivityIndicator color={Colors.primary} size="small" />
+              : <Text style={styles.floatUploadText}>↑ Subir ícono PNG</Text>}
+          </TouchableOpacity>
+        )}
         <View style={styles.iconField}>
-          <Text style={styles.fieldLabel}>ÍCONO</Text>
+          <Text style={styles.subLabel}>o emoji</Text>
           <TextInput
             style={[styles.input, styles.iconInput]}
             value={icon}
@@ -308,6 +360,11 @@ function SectionEditorCard({ section, allItems, onUpdate, onDelete, onMoveUp, on
             placeholderTextColor={Colors.textSecondary}
           />
         </View>
+      </View>
+      <Text style={styles.sizeHint}>PNG cuadrado transparente · 96×96 px. Si subes PNG, se usa en vez del emoji.</Text>
+
+      {/* Colors */}
+      <View style={styles.iconColorRow}>
         <View style={styles.colorField}>
           <Text style={styles.fieldLabel}>COLOR DEL RECUADRO</Text>
           <ColorPickerField
@@ -315,6 +372,32 @@ function SectionEditorCard({ section, allItems, onUpdate, onDelete, onMoveUp, on
             onSave={hex => onUpdate({ color: hex })}
           />
         </View>
+        <View style={styles.colorField}>
+          <Text style={styles.fieldLabel}>COLOR DEL TEXTO</Text>
+          <ColorPickerField
+            value={section.titleColor ?? '#1C0800'}
+            onSave={hex => onUpdate({ titleColor: hex })}
+          />
+        </View>
+      </View>
+
+      {/* Font picker */}
+      <Text style={styles.fieldLabel}>TIPO DE LETRA DEL TÍTULO</Text>
+      <View style={styles.fontRow}>
+        {FONT_OPTIONS.map(opt => {
+          const active = (section.titleFont ?? 'default') === opt.key;
+          return (
+            <TouchableOpacity
+              key={opt.key}
+              style={[styles.fontChip, active && styles.fontChipActive]}
+              onPress={() => onUpdate({ titleFont: opt.key })}
+            >
+              <Text style={[styles.fontChipText, active && styles.fontChipTextActive, opt.family ? { fontFamily: opt.family } : null]}>
+                {opt.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
       {/* Float image */}
@@ -334,6 +417,7 @@ function SectionEditorCard({ section, allItems, onUpdate, onDelete, onMoveUp, on
           }
         </TouchableOpacity>
       )}
+      <Text style={styles.sizeHint}>PNG transparente · proporción 4:5 · ≈600×750 px (mín. 400×500).</Text>
 
       {/* Product picker */}
       <Text style={styles.fieldLabel}>PRODUCTOS EN ESTA SECCIÓN</Text>
@@ -694,6 +778,23 @@ const styles = StyleSheet.create({
   iconColorRow: { flexDirection: 'row', gap: 10 },
   iconField: { width: 80 },
   iconInput: { textAlign: 'center', fontSize: 18 },
+  iconRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 12 },
+  iconPreviewWrap: { alignItems: 'center', gap: 6 },
+  iconPreview: { width: 48, height: 48, borderRadius: 8, backgroundColor: Colors.surfaceAlt },
+  iconUploadBtn: {
+    borderWidth: 1, borderColor: Colors.primary, borderRadius: 10,
+    paddingHorizontal: 14, paddingVertical: 12, alignItems: 'center',
+  },
+  subLabel: { fontSize: 10, color: Colors.textSecondary, marginBottom: 4 },
+  sizeHint: { fontSize: 11, color: Colors.textSecondary, marginTop: 6, marginBottom: 2 },
+  fontRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  fontChip: {
+    paddingHorizontal: 14, paddingVertical: 9, borderRadius: 20,
+    borderWidth: 1.5, borderColor: Colors.border, backgroundColor: Colors.surfaceAlt,
+  },
+  fontChipActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
+  fontChipText: { fontSize: 14, color: Colors.text, fontWeight: '700' },
+  fontChipTextActive: { color: '#000' },
   colorField: { flex: 1 },
 
   colorTrigger: {

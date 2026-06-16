@@ -21,7 +21,8 @@
         {
           "merchantIdentifier": ""
         }
-      ]
+      ],
+      "expo-font"
     ],
     "ios": {
       "supportsTablet": true,

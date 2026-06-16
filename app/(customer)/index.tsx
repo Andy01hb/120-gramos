@@ -9,6 +9,7 @@ import { ProductCardRow } from '../../components/home/ProductCardRow';
 import { SkeletonCard } from '../../components/ui/SkeletonCard';
 import { useStand } from '../../contexts/StandContext';
 import { scheduleSummary } from '../../lib/standHours';
+import { fontFamilyFor } from '../../lib/fonts';
 import { useMenu } from '../../hooks/useMenu';
 import { useCarousel } from '../../hooks/useCarousel';
 import { useHomeSections } from '../../hooks/useHomeSections';
@@ -28,12 +29,16 @@ function SkeletonRow() {
 interface AmberSectionProps {
   title: string;
   icon: string;
+  iconImageUrl?: string | null;
   color: string;
+  titleColor?: string;
+  titleFont?: string;
   floatImageUrl: string | null;
   items: MenuItem[];
 }
 
-function AmberSection({ title, icon, color, floatImageUrl, items }: AmberSectionProps) {
+function AmberSection({ title, icon, iconImageUrl, color, titleColor, titleFont, floatImageUrl, items }: AmberSectionProps) {
+  const family = fontFamilyFor(titleFont);
   return (
     <View style={styles.featuredOuter}>
       {floatImageUrl && (
@@ -42,7 +47,12 @@ function AmberSection({ title, icon, color, floatImageUrl, items }: AmberSection
         </View>
       )}
       <View style={[styles.featuredBlock, !floatImageUrl && styles.featuredBlockNoFloat, { backgroundColor: color }]}>
-        <Text style={styles.featuredLabel}>{icon} {title}</Text>
+        <View style={styles.featuredLabelRow}>
+          {iconImageUrl
+            ? <Image source={{ uri: iconImageUrl }} style={styles.featuredIcon} resizeMode="contain" />
+            : (icon ? <Text style={[styles.featuredLabel, titleColor ? { color: titleColor } : null, family ? { fontFamily: family } : null]}>{icon} </Text> : null)}
+          <Text style={[styles.featuredLabel, titleColor ? { color: titleColor } : null, family ? { fontFamily: family } : null]}>{title}</Text>
+        </View>
         <ProductCardRow items={items} variant="warm" alwaysScroll />
       </View>
     </View>
@@ -125,7 +135,10 @@ export default function HomeScreen() {
                   key={sec.id}
                   title={sec.title}
                   icon={sec.icon ?? '⭐'}
+                  iconImageUrl={sec.iconImageUrl}
                   color={sec.color ?? '#C8960A'}
+                  titleColor={sec.titleColor}
+                  titleFont={sec.titleFont}
                   floatImageUrl={sec.imageUrl}
                   items={secItems}
                 />
@@ -213,9 +226,13 @@ const styles = StyleSheet.create({
   featuredBlockNoFloat: {
     paddingTop: 20,
   },
+  featuredLabelRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: 16, marginBottom: 10,
+  },
+  featuredIcon: { width: 26, height: 26 },
   featuredLabel: {
     fontSize: 20, fontWeight: '900', color: '#1C0800',
-    paddingHorizontal: 16, marginBottom: 10,
   },
 
   errorBox: { alignItems: 'center', paddingVertical: 60, paddingHorizontal: 32, gap: 10 },

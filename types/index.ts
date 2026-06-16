@@ -27,9 +27,12 @@ export interface ProductOption {
 export interface HomeSection {
   id: string;
   title: string;
-  icon?: string;       // emoji shown before the title, e.g. '⭐', '🔥'
-  color?: string;      // hex background color, e.g. '#C8960A'
-  imageUrl: string | null;
+  icon?: string;            // emoji shown before the title (fallback if no iconImageUrl)
+  iconImageUrl?: string | null; // PNG icon shown before the title (takes priority over emoji)
+  color?: string;           // hex background color of the box, e.g. '#C8960A'
+  titleColor?: string;      // hex color of the title text
+  titleFont?: string;       // font key (see lib/fonts FONT_OPTIONS), undefined = default
+  imageUrl: string | null;  // floating drink image
   productIds: string[];
   order: number;
 }

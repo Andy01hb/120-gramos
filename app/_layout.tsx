@@ -5,6 +5,8 @@ import { AuthProvider, useAuth } from '../contexts/AuthContext';
 import { StandProvider } from '../contexts/StandContext';
 import { CartProvider } from '../contexts/CartContext';
 import { takePostLoginRedirect } from '../lib/authRedirect';
+import { useFonts } from 'expo-font';
+import { APP_FONTS } from '../lib/fonts';
 import * as Notifications from 'expo-notifications';
 import NetInfo from '@react-native-community/netinfo';
 import { Toast } from '../components/ui/Toast';
@@ -64,6 +66,10 @@ function RootGuard() {
 export default function RootLayout() {
   const stripeKey = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY;
   if (!stripeKey) throw new Error('Missing env var: EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY');
+
+  // Load custom fonts for section titles. We don't block render: titles fall back
+  // to the system font until these are ready (a brief, harmless swap).
+  useFonts(APP_FONTS);
 
   return (
     <StripeWrapper publishableKey={stripeKey}>
