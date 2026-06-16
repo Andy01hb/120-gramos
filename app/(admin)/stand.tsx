@@ -363,6 +363,25 @@ function SectionEditorCard({ section, allItems, onUpdate, onDelete, onMoveUp, on
       </View>
       <Text style={styles.sizeHint}>PNG cuadrado transparente · 96×96 px. Si subes PNG, se usa en vez del emoji.</Text>
 
+      {/* Icon size */}
+      <View style={styles.stepperRow}>
+        <Text style={styles.stepperLabel}>Tamaño del ícono: {section.iconSize ?? 26} px</Text>
+        <View style={styles.stepper}>
+          <TouchableOpacity
+            style={styles.stepBtn}
+            onPress={() => onUpdate({ iconSize: Math.max(16, (section.iconSize ?? 26) - 4) })}
+          >
+            <Text style={styles.stepBtnText}>−</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.stepBtn}
+            onPress={() => onUpdate({ iconSize: Math.min(60, (section.iconSize ?? 26) + 4) })}
+          >
+            <Text style={styles.stepBtnText}>+</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
       {/* Colors */}
       <View style={styles.iconColorRow}>
         <View style={styles.colorField}>
@@ -787,6 +806,14 @@ const styles = StyleSheet.create({
   },
   subLabel: { fontSize: 10, color: Colors.textSecondary, marginBottom: 4 },
   sizeHint: { fontSize: 11, color: Colors.textSecondary, marginTop: 6, marginBottom: 2 },
+  stepperRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 },
+  stepperLabel: { fontSize: 13, color: Colors.text, fontWeight: '600' },
+  stepper: { flexDirection: 'row', gap: 8 },
+  stepBtn: {
+    width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: Colors.border, backgroundColor: Colors.surfaceAlt,
+  },
+  stepBtnText: { fontSize: 20, color: Colors.text, fontWeight: '700' },
   fontRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   fontChip: {
     paddingHorizontal: 14, paddingVertical: 9, borderRadius: 20,

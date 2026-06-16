@@ -30,6 +30,7 @@ interface AmberSectionProps {
   title: string;
   icon: string;
   iconImageUrl?: string | null;
+  iconSize?: number;
   color: string;
   titleColor?: string;
   titleFont?: string;
@@ -37,8 +38,9 @@ interface AmberSectionProps {
   items: MenuItem[];
 }
 
-function AmberSection({ title, icon, iconImageUrl, color, titleColor, titleFont, floatImageUrl, items }: AmberSectionProps) {
+function AmberSection({ title, icon, iconImageUrl, iconSize, color, titleColor, titleFont, floatImageUrl, items }: AmberSectionProps) {
   const family = fontFamilyFor(titleFont);
+  const size = iconSize ?? 26;
   return (
     <View style={styles.featuredOuter}>
       {floatImageUrl && (
@@ -49,8 +51,8 @@ function AmberSection({ title, icon, iconImageUrl, color, titleColor, titleFont,
       <View style={[styles.featuredBlock, !floatImageUrl && styles.featuredBlockNoFloat, { backgroundColor: color }]}>
         <View style={styles.featuredLabelRow}>
           {iconImageUrl
-            ? <Image source={{ uri: iconImageUrl }} style={styles.featuredIcon} resizeMode="contain" />
-            : (icon ? <Text style={[styles.featuredLabel, titleColor ? { color: titleColor } : null, family ? { fontFamily: family } : null]}>{icon} </Text> : null)}
+            ? <Image source={{ uri: iconImageUrl }} style={[styles.featuredIcon, { width: size, height: size }]} resizeMode="contain" />
+            : (icon ? <Text style={[styles.featuredLabel, { fontSize: size }, titleColor ? { color: titleColor } : null, family ? { fontFamily: family } : null]}>{icon} </Text> : null)}
           <Text style={[styles.featuredLabel, titleColor ? { color: titleColor } : null, family ? { fontFamily: family } : null]}>{title}</Text>
         </View>
         <ProductCardRow items={items} variant="warm" alwaysScroll />
@@ -136,6 +138,7 @@ export default function HomeScreen() {
                   title={sec.title}
                   icon={sec.icon ?? '⭐'}
                   iconImageUrl={sec.iconImageUrl}
+                  iconSize={sec.iconSize}
                   color={sec.color ?? '#C8960A'}
                   titleColor={sec.titleColor}
                   titleFont={sec.titleFont}
