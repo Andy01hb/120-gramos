@@ -3,9 +3,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useCart } from '../../contexts/CartContext';
 import { useStand } from '../../contexts/StandContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../../components/ui/Button';
 import { CColors } from '../../constants/colors';
 import { DEFAULT_CLOSED_MESSAGE } from '../../lib/standHours';
+import { setPostLoginRedirect } from '../../lib/authRedirect';
 import type { OrderItem } from '../../types';
 
 function CartRow({ item, onRemove, onQty }: { item: OrderItem; onRemove: () => void; onQty: (q: number) => void }) {
@@ -37,8 +39,19 @@ function CartRow({ item, onRemove, onQty }: { item: OrderItem; onRemove: () => v
 export default function CartScreen() {
   const { items, removeItem, updateQuantity, subtotal } = useCart();
   const { isOpen, settings } = useStand();
+  const { user } = useAuth();
   const closedMsg = settings?.closedMessage || DEFAULT_CLOSED_MESSAGE;
   const router = useRouter();
+
+  function goToCheckout() {
+    if (!user) {
+      // Guest: ask to sign in, then return to checkout (cart persists)
+      setPostLoginRedirect('/(customer)/checkout');
+      router.push('/(auth)/login');
+      return;
+    }
+    router.push('/(customer)/checkout');
+  }
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -73,7 +86,7 @@ export default function CartScreen() {
               </View>
               <Button
                 label="Continuar al pago"
-                onPress={() => router.push('/(customer)/checkout')}
+                onPress={goToCheckout}
                 disabled={!isOpen}
               />
               {!isOpen && <Text style={styles.closedNote}>{closedMsg}</Text>}

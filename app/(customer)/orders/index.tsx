@@ -4,9 +4,11 @@ import { useRouter } from 'expo-router';
 import { useOrders } from '../../../hooks/useOrders';
 import { useCart } from '../../../contexts/CartContext';
 import { useStand } from '../../../contexts/StandContext';
+import { useAuth } from '../../../contexts/AuthContext';
 import { Button } from '../../../components/ui/Button';
 import { CColors } from '../../../constants/colors';
 import { DEFAULT_CLOSED_MESSAGE } from '../../../lib/standHours';
+import { setPostLoginRedirect } from '../../../lib/authRedirect';
 import type { Order, OrderItem } from '../../../types';
 
 const STATUS_COLOR: Record<Order['status'], string> = {
@@ -65,9 +67,19 @@ function CartItemRow({ item, onQty, onRemove }: {
 export default function OrdersScreen() {
   const { items: cartItems, removeItem, updateQuantity, subtotal } = useCart();
   const { isOpen, settings } = useStand();
+  const { user } = useAuth();
   const closedMsg = settings?.closedMessage || DEFAULT_CLOSED_MESSAGE;
   const { orders, loading } = useOrders();
   const router = useRouter();
+
+  function goToCheckout() {
+    if (!user) {
+      setPostLoginRedirect('/(customer)/checkout');
+      router.push('/(auth)/login');
+      return;
+    }
+    router.push('/(customer)/checkout');
+  }
   const isWeb = Platform.OS === 'web';
 
   const hasCart = cartItems.length > 0;
@@ -92,7 +104,7 @@ export default function OrdersScreen() {
             </View>
             <Button
               label="Continuar al pago"
-              onPress={() => router.push('/(customer)/checkout')}
+              onPress={goToCheckout}
               disabled={!isOpen}
             />
             {!isOpen && <Text style={styles.closedNote}>{closedMsg}</Text>}
@@ -135,7 +147,16 @@ export default function OrdersScreen() {
           !loading && !hasCart ? (
             <View style={styles.empty}>
               <Text style={styles.emptyIcon}>🧾</Text>
-              <Text style={styles.emptyText}>Aún no tienes pedidos</Text>
+              {user ? (
+                <Text style={styles.emptyText}>Aún no tienes pedidos</Text>
+              ) : (
+                <>
+                  <Text style={styles.emptyText}>Inicia sesión para ver tus pedidos</Text>
+                  <View style={{ marginTop: 12 }}>
+                    <Button label="Iniciar sesión" onPress={() => router.push('/(auth)/login')} />
+                  </View>
+                </>
+              )}
             </View>
           ) : null
         }

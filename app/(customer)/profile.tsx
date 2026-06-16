@@ -11,6 +11,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useStand } from '../../contexts/StandContext';
 import { useOrders } from '../../hooks/useOrders';
 import { scheduleSummary } from '../../lib/standHours';
+import { Button } from '../../components/ui/Button';
 import { CColors } from '../../constants/colors';
 import type { Order } from '../../types';
 import type { Timestamp } from 'firebase/firestore';
@@ -101,6 +102,27 @@ export default function ProfileScreen() {
   }
 
   const isWeb = Platform.OS === 'web';
+
+  // Guest view: invite to sign in
+  if (!user) {
+    return (
+      <SafeAreaView style={styles.safe} edges={isWeb ? [] : ['top']}>
+        <View style={styles.guestWrap}>
+          <Text style={styles.guestEmoji}>👤</Text>
+          <Text style={styles.guestTitle}>Inicia sesión</Text>
+          <Text style={styles.guestText}>
+            Accede a tu cuenta para ver tus pedidos, tus datos y hacer pedidos más rápido.
+          </Text>
+          <View style={{ width: '100%', maxWidth: 320, gap: 10, marginTop: 8 }}>
+            <Button label="Iniciar sesión" onPress={() => router.push('/(auth)/login')} />
+            <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
+              <Text style={styles.guestLink}>¿No tienes cuenta? <Text style={{ color: CColors.primary }}>Regístrate</Text></Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safe} edges={isWeb ? [] : ['top']}>
@@ -227,6 +249,11 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: CColors.background },
+  guestWrap: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32, gap: 12 },
+  guestEmoji: { fontSize: 52 },
+  guestTitle: { fontSize: 24, fontWeight: '900', color: CColors.primary },
+  guestText: { fontSize: 14, color: CColors.textSecondary, textAlign: 'center', lineHeight: 20, maxWidth: 320 },
+  guestLink: { fontSize: 14, color: CColors.textSecondary, textAlign: 'center', marginTop: 4 },
   scroll: { padding: 16, gap: 20, paddingBottom: 40 },
   scrollWeb: { maxWidth: 720, alignSelf: 'center', width: '100%', paddingHorizontal: 24, paddingTop: 32 },
 

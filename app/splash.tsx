@@ -34,7 +34,7 @@ export default function SplashScreen() {
 
   function navigate() {
     if (loading) return;
-    if (!user) router.replace('/(auth)/login');
+    if (!user) router.replace('/(customer)'); // guests browse without logging in
     else if (user.role === 'admin') router.replace('/(admin)/orders');
     else router.replace('/(customer)');
   }

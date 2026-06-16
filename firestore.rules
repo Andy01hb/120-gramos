@@ -19,7 +19,8 @@ service cloud.firestore {
     }
 
     match /menu/{itemId} {
-      allow read: if request.auth != null;
+      // Public so guests can browse the menu before signing in
+      allow read: if true;
       allow write: if isAdmin();
     }
 

@@ -7,6 +7,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useStand } from '../../contexts/StandContext';
 import { Button } from '../../components/ui/Button';
 import { CColors } from '../../constants/colors';
+import { setPostLoginRedirect } from '../../lib/authRedirect';
 
 export default function CheckoutScreen() {
   const { items, subtotal } = useCart();
@@ -69,7 +70,14 @@ export default function CheckoutScreen() {
 
         <Button
           label={`Pagar $${subtotal} MXN`}
-          onPress={() => router.push({ pathname: '/(customer)/payment', params: { notes } })}
+          onPress={() => {
+            if (!user) {
+              setPostLoginRedirect('/(customer)/checkout');
+              router.push('/(auth)/login');
+              return;
+            }
+            router.push({ pathname: '/(customer)/payment', params: { notes } });
+          }}
         />
         <Text style={styles.note}>El pago se procesa de forma segura con Stripe.</Text>
       </ScrollView>

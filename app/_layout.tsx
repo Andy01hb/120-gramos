@@ -4,6 +4,7 @@ import { StripeWrapper } from '../components/StripeWrapper';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
 import { StandProvider } from '../contexts/StandContext';
 import { CartProvider } from '../contexts/CartContext';
+import { takePostLoginRedirect } from '../lib/authRedirect';
 import * as Notifications from 'expo-notifications';
 import NetInfo from '@react-native-community/netinfo';
 import { Toast } from '../components/ui/Toast';
@@ -36,15 +37,19 @@ function RootGuard() {
     const inCustomer = segments[0] === '(customer)';
 
     if (!user) {
-      if (!inAuth && segments[0] !== 'splash') router.replace('/login');
+      // Guests may browse the customer area; only the admin area is gated.
+      if (inAdmin) router.replace('/login');
       return;
     }
     if (user.role === 'admin' && !inAdmin && !previewMode) {
+      takePostLoginRedirect(); // discard any stale guest redirect
       router.replace('/(admin)');
       return;
     }
     if (user.role === 'customer' && !inCustomer) {
-      router.replace('/(customer)');
+      // After login, return the guest to where they were headed (e.g. checkout)
+      const redirect = takePostLoginRedirect();
+      router.replace((redirect ?? '/(customer)') as any);
     }
   }, [user, loading, segments[0], previewMode]);
 
