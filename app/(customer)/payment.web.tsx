@@ -10,28 +10,41 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { loadStripe } from '@stripe/stripe-js';
+import { doc, getDoc } from 'firebase/firestore';
+import { loadStripe, type Stripe } from '@stripe/stripe-js';
 import {
   Elements,
   PaymentElement,
   useStripe,
   useElements,
 } from '@stripe/react-stripe-js';
-import { app } from '../../lib/firebase';
+import { app, db } from '../../lib/firebase';
 import { useCart } from '../../contexts/CartContext';
 import { CColors } from '../../constants/colors';
-
-// Web-only file: the publishable key is guaranteed by the guard in app/_layout.tsx
-const stripePromise = loadStripe(process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 export default function PaymentScreenWeb() {
   const { notes } = useLocalSearchParams<{ notes?: string }>();
   const { items, subtotal } = useCart();
   const router = useRouter();
 
+  const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Publishable key: prefer the one the business set in the admin panel; fall back to env.
+  useEffect(() => {
+    (async () => {
+      let pk = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? '';
+      try {
+        const snap = await getDoc(doc(db, 'settings', 'stripe'));
+        const configured = snap.data()?.publishableKey as string | undefined;
+        if (configured) pk = configured;
+      } catch { /* fall back to env */ }
+      if (pk) setStripePromise(loadStripe(pk));
+      else setError('No hay una llave de Stripe configurada. Configúrala en el panel de administración.');
+    })();
+  }, []);
 
   useEffect(() => {
     if (items.length === 0) return;
@@ -83,7 +96,7 @@ export default function PaymentScreenWeb() {
     );
   }
 
-  if (!clientSecret || !paymentIntentId) {
+  if (!stripePromise || !clientSecret || !paymentIntentId) {
     return (
       <Centered>
         <ActivityIndicator size="large" color={CColors.primary} />

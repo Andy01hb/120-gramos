@@ -3,6 +3,7 @@ import { defineSecret } from 'firebase-functions/params';
 import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
 import Stripe from 'stripe';
+import { getLatestSecret } from './stripeConfig';
 
 const stripeSecretKey = defineSecret('STRIPE_SECRET_KEY');
 const stripeWebhookSecret = defineSecret('STRIPE_WEBHOOK_SECRET');
@@ -10,7 +11,10 @@ const stripeWebhookSecret = defineSecret('STRIPE_WEBHOOK_SECRET');
 export const stripeWebhook = onRequest(
   { secrets: [stripeSecretKey, stripeWebhookSecret] },
   async (req, res) => {
-    const stripe = new Stripe(stripeSecretKey.value(), { apiVersion: '2024-06-20' });
+    // Prefer admin-panel keys (Secret Manager latest); fall back to deploy-bound secrets
+    const sk = (await getLatestSecret('STRIPE_SECRET_KEY')) ?? stripeSecretKey.value();
+    const whsec = (await getLatestSecret('STRIPE_WEBHOOK_SECRET')) ?? stripeWebhookSecret.value();
+    const stripe = new Stripe(sk, { apiVersion: '2024-06-20' });
     const sig = req.headers['stripe-signature'] as string;
     let event: Stripe.Event;
 
@@ -18,7 +22,7 @@ export const stripeWebhook = onRequest(
       event = stripe.webhooks.constructEvent(
         req.rawBody,
         sig,
-        stripeWebhookSecret.value()
+        whsec
       );
     } catch {
       res.status(400).send('Webhook signature invalid');

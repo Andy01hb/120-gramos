@@ -2,6 +2,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { defineSecret } from 'firebase-functions/params';
 import Stripe from 'stripe';
 import { validateOrderItems, OrderItem } from './validateOrderItems';
+import { getLatestSecret } from './stripeConfig';
 
 const stripeSecretKey = defineSecret('STRIPE_SECRET_KEY');
 
@@ -15,7 +16,9 @@ export const createPaymentIntent = onCall({ secrets: [stripeSecretKey], invoker:
   // Validate items against Firestore prices and get the server-trusted subtotal
   const subtotal = await validateOrderItems(items);
 
-  const stripe = new Stripe(stripeSecretKey.value(), { apiVersion: '2024-06-20' });
+  // Prefer the key configured from the admin panel (Secret Manager latest); fall back to the deploy-bound secret
+  const sk = (await getLatestSecret('STRIPE_SECRET_KEY')) ?? stripeSecretKey.value();
+  const stripe = new Stripe(sk, { apiVersion: '2024-06-20' });
 
   const itemsJson = JSON.stringify(items);
   const metadataItems = itemsJson.length <= 490

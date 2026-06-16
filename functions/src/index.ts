@@ -9,3 +9,4 @@ export { notifyOrderReady } from './notifyOrderReady';
 export { createCounterOrder } from './createCounterOrder';
 export { clipWebhook } from './clipWebhook';
 export { syncAdminClaim } from './syncAdminClaim';
+export { setStripeConfig } from './setStripeConfig';

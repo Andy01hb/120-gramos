@@ -49,6 +49,15 @@ export default function AdminProfileScreen() {
           <Text style={styles.arrow}>›</Text>
         </TouchableOpacity>
 
+        <TouchableOpacity style={styles.previewBtn} onPress={() => router.push('/(admin)/payments' as any)}>
+          <Text style={styles.previewIcon}>💳</Text>
+          <View style={styles.previewTextWrap}>
+            <Text style={styles.previewLabel}>Pagos (Stripe)</Text>
+            <Text style={styles.previewSub}>Conecta tu cuenta de Stripe para cobrar con tarjeta</Text>
+          </View>
+          <Text style={styles.arrow}>›</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
           <Text style={styles.logoutText}>Cerrar sesión</Text>
         </TouchableOpacity>

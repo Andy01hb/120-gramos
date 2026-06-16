@@ -44,6 +44,7 @@ export default function AdminLayout() {
       <Tabs.Screen name="stand" />
       <Tabs.Screen name="menu-mgmt" />
       <Tabs.Screen name="profile" />
+      <Tabs.Screen name="payments" />{/* route only, no tab button */}
     </Tabs>
   );
 
