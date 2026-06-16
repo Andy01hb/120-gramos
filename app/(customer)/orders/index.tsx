@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -6,9 +7,9 @@ import { useCart } from '../../../contexts/CartContext';
 import { useStand } from '../../../contexts/StandContext';
 import { useAuth } from '../../../contexts/AuthContext';
 import { Button } from '../../../components/ui/Button';
+import { AuthSheet } from '../../../components/customer/AuthSheet';
 import { CColors } from '../../../constants/colors';
 import { DEFAULT_CLOSED_MESSAGE } from '../../../lib/standHours';
-import { setPostLoginRedirect } from '../../../lib/authRedirect';
 import type { Order, OrderItem } from '../../../types';
 
 const STATUS_COLOR: Record<Order['status'], string> = {
@@ -71,13 +72,10 @@ export default function OrdersScreen() {
   const closedMsg = settings?.closedMessage || DEFAULT_CLOSED_MESSAGE;
   const { orders, loading } = useOrders();
   const router = useRouter();
+  const [authVisible, setAuthVisible] = useState(false);
 
   function goToCheckout() {
-    if (!user) {
-      setPostLoginRedirect('/(customer)/checkout');
-      router.push('/(auth)/login');
-      return;
-    }
+    if (!user) { setAuthVisible(true); return; }
     router.push('/(customer)/checkout');
   }
   const isWeb = Platform.OS === 'web';
@@ -160,6 +158,11 @@ export default function OrdersScreen() {
             </View>
           ) : null
         }
+      />
+      <AuthSheet
+        visible={authVisible}
+        onClose={() => setAuthVisible(false)}
+        onSuccess={() => { setAuthVisible(false); router.push('/(customer)/checkout'); }}
       />
     </SafeAreaView>
   );

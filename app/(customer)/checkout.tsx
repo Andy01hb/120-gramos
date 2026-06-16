@@ -6,8 +6,8 @@ import { useCart } from '../../contexts/CartContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useStand } from '../../contexts/StandContext';
 import { Button } from '../../components/ui/Button';
+import { AuthSheet } from '../../components/customer/AuthSheet';
 import { CColors } from '../../constants/colors';
-import { setPostLoginRedirect } from '../../lib/authRedirect';
 
 export default function CheckoutScreen() {
   const { items, subtotal } = useCart();
@@ -16,6 +16,7 @@ export default function CheckoutScreen() {
   const location = settings?.location || 'Plaza de los Enamorados · Río Bravo';
   const router = useRouter();
   const [notes, setNotes] = useState('');
+  const [authVisible, setAuthVisible] = useState(false);
   const isWeb = Platform.OS === 'web';
 
   if (items.length === 0) {
@@ -71,16 +72,17 @@ export default function CheckoutScreen() {
         <Button
           label={`Pagar $${subtotal} MXN`}
           onPress={() => {
-            if (!user) {
-              setPostLoginRedirect('/(customer)/checkout');
-              router.push('/(auth)/login');
-              return;
-            }
+            if (!user) { setAuthVisible(true); return; }
             router.push({ pathname: '/(customer)/payment', params: { notes } });
           }}
         />
         <Text style={styles.note}>El pago se procesa de forma segura con Stripe.</Text>
       </ScrollView>
+      <AuthSheet
+        visible={authVisible}
+        onClose={() => setAuthVisible(false)}
+        onSuccess={() => { setAuthVisible(false); router.push({ pathname: '/(customer)/payment', params: { notes } }); }}
+      />
     </SafeAreaView>
     </KeyboardAvoidingView>
   );

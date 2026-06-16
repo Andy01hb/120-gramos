@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -5,9 +6,9 @@ import { useCart } from '../../contexts/CartContext';
 import { useStand } from '../../contexts/StandContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../../components/ui/Button';
+import { AuthSheet } from '../../components/customer/AuthSheet';
 import { CColors } from '../../constants/colors';
 import { DEFAULT_CLOSED_MESSAGE } from '../../lib/standHours';
-import { setPostLoginRedirect } from '../../lib/authRedirect';
 import type { OrderItem } from '../../types';
 
 function CartRow({ item, onRemove, onQty }: { item: OrderItem; onRemove: () => void; onQty: (q: number) => void }) {
@@ -42,14 +43,10 @@ export default function CartScreen() {
   const { user } = useAuth();
   const closedMsg = settings?.closedMessage || DEFAULT_CLOSED_MESSAGE;
   const router = useRouter();
+  const [authVisible, setAuthVisible] = useState(false);
 
   function goToCheckout() {
-    if (!user) {
-      // Guest: ask to sign in, then return to checkout (cart persists)
-      setPostLoginRedirect('/(customer)/checkout');
-      router.push('/(auth)/login');
-      return;
-    }
+    if (!user) { setAuthVisible(true); return; } // login/registro sin salir del flujo
     router.push('/(customer)/checkout');
   }
 
@@ -94,6 +91,11 @@ export default function CartScreen() {
           </View>
         )
       }
+      <AuthSheet
+        visible={authVisible}
+        onClose={() => setAuthVisible(false)}
+        onSuccess={() => { setAuthVisible(false); router.push('/(customer)/checkout'); }}
+      />
     </SafeAreaView>
   );
 }
