@@ -1,10 +1,11 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
+    // Admin gate via custom claim (set by the syncAdminClaim function + initial seed).
+    // Storage→Firestore cross-service lookups proved unreliable in this project,
+    // so we read the claim straight from the auth token.
     function isAdmin() {
-      return request.auth != null &&
-        firestore.exists(/databases/(default)/documents/users/$(request.auth.uid)) &&
-        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      return request.auth != null && request.auth.token.admin == true;
     }
 
     match /menu/{fileName} {
