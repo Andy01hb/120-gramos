@@ -34,13 +34,15 @@ interface AmberSectionProps {
   color: string;
   titleColor?: string;
   titleFont?: string;
+  titleSize?: number;
   floatImageUrl: string | null;
   items: MenuItem[];
 }
 
-function AmberSection({ title, icon, iconImageUrl, iconSize, color, titleColor, titleFont, floatImageUrl, items }: AmberSectionProps) {
+function AmberSection({ title, icon, iconImageUrl, iconSize, color, titleColor, titleFont, titleSize, floatImageUrl, items }: AmberSectionProps) {
   const family = fontFamilyFor(titleFont);
   const size = iconSize ?? 26;
+  const tSize = titleSize ?? 20;
   return (
     <View style={styles.featuredOuter}>
       {floatImageUrl && (
@@ -53,7 +55,7 @@ function AmberSection({ title, icon, iconImageUrl, iconSize, color, titleColor, 
           {iconImageUrl
             ? <Image source={{ uri: iconImageUrl }} style={[styles.featuredIcon, { width: size, height: size }]} resizeMode="contain" />
             : (icon ? <Text style={[styles.featuredLabel, { fontSize: size }, titleColor ? { color: titleColor } : null, family ? { fontFamily: family } : null]}>{icon} </Text> : null)}
-          <Text style={[styles.featuredLabel, titleColor ? { color: titleColor } : null, family ? { fontFamily: family } : null]}>{title}</Text>
+          <Text style={[styles.featuredLabel, { fontSize: tSize }, titleColor ? { color: titleColor } : null, family ? { fontFamily: family } : null]}>{title}</Text>
         </View>
         <ProductCardRow items={items} variant="warm" alwaysScroll />
       </View>
@@ -142,6 +144,7 @@ export default function HomeScreen() {
                   color={sec.color ?? '#C8960A'}
                   titleColor={sec.titleColor}
                   titleFont={sec.titleFont}
+                  titleSize={sec.titleSize}
                   floatImageUrl={sec.imageUrl}
                   items={secItems}
                 />

@@ -33,6 +33,7 @@ export interface HomeSection {
   color?: string;           // hex background color of the box, e.g. '#C8960A'
   titleColor?: string;      // hex color of the title text
   titleFont?: string;       // font key (see lib/fonts FONT_OPTIONS), undefined = default
+  titleSize?: number;       // title font size in px, default 20
   imageUrl: string | null;  // floating drink image
   productIds: string[];
   order: number;

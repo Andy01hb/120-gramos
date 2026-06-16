@@ -256,18 +256,30 @@ function SectionEditorCard({ section, allItems, onUpdate, onDelete, onMoveUp, on
   const [uploading, setUploading] = useState(false);
   const [uploadingIcon, setUploadingIcon] = useState(false);
   const [size, setSize] = useState(section.iconSize ?? 26);
+  const [tSize, setTSize] = useState(section.titleSize ?? 20);
   const isTitleFocused = useRef(false);
   const isIconFocused = useRef(false);
   const isSizeEditing = useRef(false);
+  const isTSizeEditing = useRef(false);
 
   useEffect(() => {
     if (!isSizeEditing.current) setSize(section.iconSize ?? 26);
   }, [section.iconSize]);
 
+  useEffect(() => {
+    if (!isTSizeEditing.current) setTSize(section.titleSize ?? 20);
+  }, [section.titleSize]);
+
   function commitSize(n: number) {
     const c = Math.max(12, Math.min(120, Math.round(n || 0)));
     setSize(c);
     onUpdate({ iconSize: c });
+  }
+
+  function commitTitleSize(n: number) {
+    const c = Math.max(12, Math.min(72, Math.round(n || 0)));
+    setTSize(c);
+    onUpdate({ titleSize: c });
   }
 
   useEffect(() => {
@@ -443,6 +455,33 @@ function SectionEditorCard({ section, allItems, onUpdate, onDelete, onMoveUp, on
             </TouchableOpacity>
           );
         })}
+      </View>
+
+      {/* Title size: slider + numeric input */}
+      <Text style={styles.fieldLabel}>TAMAÑO DEL TEXTO</Text>
+      <View style={styles.sizeRow}>
+        <Slider
+          style={{ flex: 1 }}
+          minimumValue={12}
+          maximumValue={72}
+          step={1}
+          value={tSize}
+          onValueChange={setTSize}
+          onSlidingComplete={commitTitleSize}
+          minimumTrackTintColor={Colors.primary}
+          maximumTrackTintColor={Colors.border}
+          thumbTintColor={Colors.primary}
+        />
+        <TextInput
+          style={[styles.input, styles.sizeInput]}
+          value={String(tSize)}
+          onFocus={() => { isTSizeEditing.current = true; }}
+          onChangeText={(t) => { const n = parseInt(t.replace(/[^0-9]/g, ''), 10); setTSize(Number.isNaN(n) ? 0 : n); }}
+          onBlur={() => { isTSizeEditing.current = false; commitTitleSize(tSize); }}
+          keyboardType="number-pad"
+          maxLength={3}
+        />
+        <Text style={styles.subLabel}>px</Text>
       </View>
 
       {/* Float image */}
